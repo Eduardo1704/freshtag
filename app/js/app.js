@@ -2,6 +2,7 @@
 // (Chrome on Android) and a simulated reader otherwise. Tags carry a link like .../#/tag/FT-VERDE, so on
 // iPhone touching a programmed pinza opens the app straight on that pinza.
 import { CATS, PLACES, FREEZER_DAYS, QUICK, KIT, RECIPES, demoSeed } from './data.js';
+import { FOOD } from './icons.js';
 
 const KEY = 'freshtag:v1';
 const DAY = 864e5;
@@ -44,10 +45,10 @@ const P = {
 const I = new Proxy({}, { get: (_, k) => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${P[k] || ''}</svg>` });
 
 // ---------- state ----------
-const fresh = () => ({ user: null, pinzas: KIT.map(p => ({ ...p })), items: [], log: [], prefs: { bigText: false, notif: false, theme: 'dark' }, notified: '' });
+const fresh = () => ({ user: null, pinzas: KIT.map(p => ({ ...p })), items: [], log: [], prefs: { bigText: false, notif: false, theme: 'light', v3: true }, notified: '' });
 let S;
 try { S = JSON.parse(localStorage.getItem(KEY)) || fresh(); } catch { S = fresh(); }
-S.prefs.theme ||= 'dark';
+if (!S.prefs.v3) { S.prefs.theme = 'light'; S.prefs.v3 = true; } // v3: the brand manual asks for a cream background
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch { /* private mode: state stays in memory */ } };
 
 const ui = { tab: 'inicio', filter: 'todos', place: 'todo', q: '', onb: 0, pendingTag: null };
@@ -133,19 +134,34 @@ const logoSrc = () => S.prefs.theme === 'light' ? 'img/logo.svg' : 'img/logo-neg
 const pz = p => p ? `<span class="pz pz-${p.color}"></span>` : '';
 const pinzaImg = p => ['crema', 'verde', 'coral'].includes(p.color)
   ? `<img src="img/pinza-${p.color}.jpg" alt="">` : `<div class="ph"><img src="img/isotipo.svg" alt=""></div>`;
-const stateTag = s => `<span class="state c-${s}"><span class="dot bg-${s}"></span>${STATE[s].label}</span>`;
+const foodIcon = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${FOOD[n] || FOOD['shopping-basket']}</svg>`;
+const catTile = (cat, cls = '') => { const c = CATS[cat] || CATS.otros; return `<span class="tile t-${c.tone} ${cls}">${foodIcon(c.icon)}</span>`; };
+// state label in the brand's hang-tag shape (FRESH·TAG); the manual asks for color + text, never color alone
+const stateTag = s => `<span class="tagx s-${s}"><i></i>${STATE[s].label}</span>`;
+// freshness meter: five segments, filled by the share of shelf life left
+const meter = (pct, state) => { const n = state === 'vencido' ? 0 : Math.max(1, Math.ceil(pct * 5));
+  return `<span class="meter s-${state}" aria-hidden="true">${[0, 1, 2, 3, 4].map(k => `<i class="${k < n ? 'on' : ''}" style="--k:${k}"></i>`).join('')}</span>`; };
+const daysBig = l => l < 0 ? `<b class="num">${-l}</b><small>${-l === 1 ? 'día vencido' : 'días vencido'}</small>`
+  : l === 0 ? '<b>Hoy</b><small>vence</small>' : `<b class="num">${l}</b><small>${l === 1 ? 'día' : 'días'}</small>`;
+// the pinza that closes the package hangs over the card edge as a tab in its own color
+const clip = p => p ? `<span class="clip pzc-${p.color}">${I.nfc}${esc(p.name)}</span>` : '';
 
 // swipe right = lo consumí, swipe left = lo tiré (gesture handled in the pointer listeners below)
 function itemCard(x, i = 0) {
   const { it, state, left, pct, ago } = x, p = pinzaOf(it.pinza);
   return `<div class="swipe-wrap" style="--i:${i}"><div class="swipe-bg" aria-hidden="true"><span class="ok">${I.check} Lo consumí</span><span class="no">Lo tiré ${I.trash}</span></div>
-    <button class="item glass s-${state}" data-act="item" data-swipe data-id="${it.id}">
-    <span class="bubble">${CATS[it.cat]?.emoji || '🧺'}</span>
-    <span><b>${esc(it.name)}</b><span class="meta">${PLACES[it.place].label} · ${agoText(ago)}${p ? ` · ${pz(p)} ${esc(p.name.replace('Pinza ', ''))}` : ''}</span></span>
-    <span class="right">${stateTag(state)}<span class="left num">${left < 0 ? `hace ${plural(-left, 'día', 'días')}` : leftText(left)}</span></span>
-    <span class="bar"><i style="width:${Math.max(pct, .04) * 100}%"></i></span>
+    <button class="item glass s-${state}" data-act="item" data-swipe data-id="${it.id}">${clip(p)}
+    ${catTile(it.cat)}
+    <span class="item-main"><b>${esc(it.name)}</b><span class="meta">${PLACES[it.place].label} · ${agoText(ago)}</span>
+      <span class="row2">${stateTag(state)}${meter(pct, state)}</span></span>
+    <span class="days s-${state}">${daysBig(left)}</span>
   </button></div>`;
 }
+// "Vence pronto" cards are hang tags: punched hole, string, days left
+const hangTag = (x, i = 0) => `<button class="hang glass press s-${x.state}" data-act="item" data-id="${x.it.id}" style="--i:${i}">
+  <span class="hole" aria-hidden="true"></span>${catTile(x.it.cat, 'sm')}<b>${esc(x.it.name)}</b>
+  <span class="days s-${x.state}">${daysBig(x.left)}</span>${meter(x.pct, x.state)}</button>`;
+const ornament = '<span class="orn" aria-hidden="true"><i></i><i></i></span>';
 
 // ---------- views ----------
 function viewInicio() {
@@ -155,42 +171,41 @@ function viewInicio() {
   const month = S.log.filter(l => diff(today(), parse(l.date)) < 30);
   const saved = month.filter(l => l.action === 'consumido').length;
   const head = `<header class="top" style="--i:0">
-      <div><p class="hello">Hola, ${esc(name)}</p>${title('Mi cocina')}</div>
+      <div><p class="hello"><img class="head-iso" src="img/isotipo-reducido.svg" alt="">Hola, ${esc(name)}</p>${title('Mi cocina')}</div>
       <div class="top-actions">
         <button class="icon-btn glass press" data-act="alerts" aria-label="Avisos">${I.bell}${c.porvencer + c.vencido ? `<span class="badge num">${c.porvencer + c.vencido}</span>` : ''}</button>
         <button class="avatar press" data-act="profile" aria-label="Perfil">${esc(name[0] || 'F').toUpperCase()}</button>
       </div></header>`;
+  const nfcBox = (i) => `<button class="nfc-box press" data-act="scan" style="--i:${i}"><span class="nfc-ico">${I.nfc}</span>
+      <span><b>Acerca tu teléfono a una pinza</b><small>para registrar o consultar un alimento</small></span>${I.right}</button>`;
   if (!total) return head + `<div class="empty glass" style="--i:1"><img src="img/isotipo.svg" alt="">
-      <b>Tu cocina está vacía</b><p>Cierra un empaque con tu pinza FRESHTAG y acerca el celular para registrarlo.</p>
-      <button class="btn btn-primary" data-act="scan">${I.nfc} Acerca tu celular</button>
-      <p style="margin:14px 0 0"><button class="link" data-act="add">o agrégalo sin pinza ${I.right}</button></p></div>`;
+      <b>Tu cocina está vacía</b><p>Cierra un empaque con tu pinza FRESHTAG y regístralo con tu teléfono.</p></div>
+      ${nfcBox(2)}<p style="margin:14px 0 0;text-align:center"><button class="link" data-act="add">o agrégalo sin pinza ${I.right}</button></p>`;
   const heroTitle = c.porvencer
     ? `<span class="num">${roll(c.porvencer, 'hero')}</span> ${c.porvencer === 1 ? 'alimento' : 'alimentos'} por vencer`
     : c.vencido ? 'Revisa lo que ya venció' : 'Todo está fresco';
   return head + `
-    <section class="hero glass beam" style="--i:1">
-      <img class="hero-iso" src="img/isotipo.svg" alt="">
-      <div><p class="eyebrow">Úsalo primero</p><h2>${heroTitle}</h2>
-        <p>${soon[0] ? `${esc(soon[0].it.name)}: ${leftText(soon[0].left).toLowerCase()}` : 'Sigue registrando tus empaques.'}</p>
-        <button class="btn btn-coral press" data-act="scan">${I.nfc} Acerca tu celular</button></div>
-      ${donut([{ v: c.fresco, c: '#5FC3A0' }, { v: c.porvencer, c: '#F2B652' }, { v: c.vencido, c: '#FF7A66' }], total,
-        `<b class="num">${roll(total, 'total')}</b><small>en tu cocina</small>`)}
+    <section class="summary glass beam" style="--i:1">
+      <div class="sum-top"><div><p class="eyebrow">Úsalo primero</p><h2>${heroTitle}</h2>
+        <p class="sum-sub">${soon[0] ? `${esc(soon[0].it.name)}: ${leftText(soon[0].left).toLowerCase()}` : 'Sigue registrando tus empaques.'}</p></div>
+        ${donut([{ v: c.fresco, c: 'var(--fresco)' }, { v: c.porvencer, c: 'var(--porvencer)' }, { v: c.vencido, c: 'var(--vencido)' }], total,
+          `<b class="num">${roll(total, 'total')}</b><small>en tu cocina</small>`, '', 'var(--track)')}</div>
+      <div class="propbar" aria-hidden="true">${['fresco', 'porvencer', 'vencido'].map(s => c[s] ? `<i class="s-${s}" style="flex:${c[s]}"></i>` : '').join('')}</div>
+      <div class="semaforo">${['fresco', 'porvencer', 'vencido'].map(s => `<button class="sem s-${s}" data-act="filter" data-f="${s}">
+        <b class="num">${roll(c[s], 'st-' + s)}</b><span><i></i>${STATE[s].many}</span></button>`).join('')}</div>
     </section>
-    <div class="stats3" style="--i:2">
-      ${['fresco', 'porvencer', 'vencido'].map(s => `<button class="stat glass press" data-act="filter" data-f="${s}"><b class="num c-${s}">${roll(c[s], 'st-' + s)}</b><span>${STATE[s].many}</span></button>`).join('')}
-    </div>
-    ${c.vencido ? `<button class="notice glass press" data-act="filter" data-f="vencido" style="--i:3">${I.alert}<span><b>${plural(c.vencido, 'alimento vencido', 'alimentos vencidos')}</b><span>Revísalo y registra si lo usaste o lo tiraste.</span></span>${I.right}</button>` : ''}
+    ${c.vencido ? `<button class="notice press" data-act="filter" data-f="vencido" style="--i:2">${I.alert}<span><b>${plural(c.vencido, 'alimento vencido', 'alimentos vencidos')}</b><span>Revisa y registra si lo usaste o lo tiraste.</span></span>${I.right}</button>` : ''}
+    ${nfcBox(3)}
     <section class="sec" style="--i:4"><div class="sec-head"><h3>Vence pronto</h3><button class="link" data-act="tab" data-tab="despensa">Ver todo ${I.right}</button></div>
-      <div class="hscroll">${soon.map(x => `<button class="mini glass press" data-act="item" data-id="${x.it.id}">
-        <span class="row"><span class="emoji">${CATS[x.it.cat]?.emoji || '🧺'}</span>${ring(x.pct, COLOR[x.state], 42, 5, `<span class="num c-${x.state}">${Math.max(x.left, 0)}</span>`)}</span>
-        <b>${esc(x.it.name)}</b><small class="c-${x.state}">${leftText(x.left)}</small></button>`).join('')}</div>
+      <div class="hscroll">${soon.map((x, i) => hangTag(x, i)).join('')}</div>
     </section>
-    ${top ? `<section class="sec" style="--i:5"><div class="sec-head"><h3>Cocina hoy</h3><button class="link" data-act="tab" data-tab="recetas">Más recetas ${I.right}</button></div>
-      <button class="feature glass press" data-act="recipe" data-id="${top.r.id}"><span class="tile">${top.r.emoji}</span>
-        <span><b>${top.r.name}</b><p>Usa lo que está por vencer · <span class="num">${top.r.min}</span> min</p>
-        <span class="tags">${top.used.slice(0, 3).map(x => `<span class="tag ${x.state === 'porvencer' ? 'hot' : ''}">${esc(x.it.name)}</span>`).join('')}</span></span></button></section>` : ''}
-    <section class="sec" style="--i:6"><button class="impact-mini glass press" data-act="tab" data-tab="impacto">
-      ${I.leaf}<span><b class="num">${roll(saved, 'saved')}</b></span><span>${saved === 1 ? 'alimento aprovechado' : 'alimentos aprovechados'} en los últimos 30 días. Ver tu impacto.</span></button></section>`;
+    ${top ? `<section class="sec" style="--i:5">
+      <button class="reco press" data-act="recipe" data-id="${top.r.id}">${ornament}<span class="reco-ico">${foodIcon(top.r.icon)}</span>
+        <span class="eyebrow">Receta sugerida</span><b class="reco-t">${top.r.name}</b>
+        <span class="reco-m">${top.hot ? `Usa ${plural(top.hot, 'alimento', 'alimentos')} por vencer · ` : ''}<span class="num">${top.r.min}</span> min</span>
+        <span class="tags">${top.used.slice(0, 3).map(x => `<span class="tag">${esc(x.it.name)}</span>`).join('')}</span></button></section>` : ''}
+    <section class="sec" style="--i:6"><button class="impact-mini press" data-act="tab" data-tab="impacto">
+      <b class="num">${roll(saved, 'saved')}</b><span>${saved === 1 ? 'alimento aprovechado' : 'alimentos aprovechados'} en los últimos 30 días</span>${I.right}</button></section>`;
 }
 
 function viewDespensa() {
@@ -201,7 +216,7 @@ function viewDespensa() {
     <div class="seg" style="--i:2" data-seg="place"><span class="knob"></span>${[['todo', 'Todo'], ...Object.entries(PLACES).map(([k, v]) => [k, v.label])].map(([k, l]) =>
       `<button class="${ui.place === k ? 'on' : ''}" data-act="place" data-p="${k}" aria-label="${l}: ${byPlace(k)}">${l}</button>`).join('')}</div>
     <div class="chips" style="--i:3;margin-top:12px">${[['todos', 'Todos'], ['fresco', 'Frescos'], ['porvencer', 'Por vencer'], ['vencido', 'Vencidos']].map(([k, l]) =>
-      `<button class="chip ${ui.filter === k ? 'on' : ''}" data-act="filter" data-f="${k}">${k !== 'todos' ? `<span class="dot bg-${k}"></span>` : ''}${l}</button>`).join('')}</div>
+      `<button class="chip ${ui.filter === k ? 'on' : ''}" data-act="filter" data-f="${k}">${k !== 'todos' ? `<span class="dot s-${k}"></span>` : ''}${l}</button>`).join('')}</div>
     <div id="list" style="--i:4">${listHTML()}</div>
     ${all.length ? `<p class="swipe-hint" style="--i:5"><i></i>Desliza → si lo consumiste · ← si lo tiraste</p>` : ''}`;
 }
@@ -218,9 +233,11 @@ function listHTML() {
 function viewRecetas() {
   const ms = matchRecipes(), hot = sorted().filter(x => x.state === 'porvencer');
   return `<header class="top" style="--i:0"><div>${title('Recetas')}<p class="sub">Cocina primero lo que está por vencer</p></div></header>
-    ${hot.length ? `<div class="use-first glass" style="--i:1"><b>Úsalo primero</b><div class="tags">${hot.map(x => `<span class="tag">${CATS[x.it.cat]?.emoji} ${esc(x.it.name)} · ${leftText(x.left).toLowerCase()}</span>`).join('')}</div></div>` : ''}
-    <div class="recipes">${ms.map((m, i) => `<button class="feature glass press recipe ${i === 0 && m.hot ? 'top' : ''}" data-act="recipe" data-id="${m.r.id}" style="--i:${i + 2}">
-      <span class="tile">${m.r.emoji}</span><span><b>${m.r.name}</b>
+    ${hot.length ? `<section style="--i:1"><p class="eyebrow">Úsalo primero</p><div class="hscroll">${hot.map((x, i) => hangTag(x, i)).join('')}</div></section>` : ''}
+    <div class="recipes">${ms.map((m, i) => i === 0 && m.hot ? `<button class="reco press" data-act="recipe" data-id="${m.r.id}" style="--i:2">${ornament}<span class="reco-ico">${foodIcon(m.r.icon)}</span>
+      <span class="eyebrow">Receta sugerida</span><b class="reco-t">${m.r.name}</b><span class="reco-m">Usa ${plural(m.hot, 'alimento', 'alimentos')} por vencer · <span class="num">${m.r.min}</span> min</span>
+      <span class="tags">${m.used.slice(0, 4).map(x => `<span class="tag">${esc(x.it.name)}</span>`).join('')}</span></button>` : `<button class="feature glass press recipe" data-act="recipe" data-id="${m.r.id}" style="--i:${i + 2}">
+      <span class="tile t-azul lg">${foodIcon(m.r.icon)}</span><span><b>${m.r.name}</b>
       <span class="meta-line">${I.clock}<span class="num">${m.r.min} min</span>${m.used.length ? `· ${m.used.length === 1 ? 'usa 1 de tus alimentos' : `usa ${m.used.length} de tus alimentos`}` : '· te faltan ingredientes'}</span>
       <span class="tags">${m.used.slice(0, 4).map(x => `<span class="tag ${x.state === 'porvencer' ? 'hot' : ''}">${esc(x.it.name)}</span>`).join('')}</span></span></button>`).join('')}</div>`;
 }
@@ -239,26 +256,26 @@ function viewImpacto() {
   return `<header class="top" style="--i:0"><div>${title('Impacto')}<p class="sub">Tus últimos 30 días</p></div>
       <button class="avatar press" data-act="profile" aria-label="Perfil">${esc(first()[0] || 'F').toUpperCase()}</button></header>
     <section class="big-card glass" style="--i:1"><div class="impact-top">
-      ${donut([{ v: ok, c: 'var(--fresco)' }, { v: bad, c: 'var(--coral)' }], Math.max(1, ok + bad), `<b class="num c-fresco">${roll(rate + '%', 'rate')}</b><small>aprovechado</small>`, 'green', 'var(--glass-2)')}
+      ${donut([{ v: ok, c: 'var(--fresco)' }, { v: bad, c: 'var(--vencido)' }], Math.max(1, ok + bad), `<b class="num c-fresco">${roll(rate + '%', 'rate')}</b><small>aprovechado</small>`, 'green', 'var(--track)')}
       <div><h2>${recent.length ? (rate >= 75 ? '¡Vas muy bien!' : 'Vas mejorando') : 'Aún sin registros'}</h2>
         <p>${recent.length ? `De lo que registraste, aprovechaste <b class="num">${rate}%</b> antes de que se echara a perder.` : 'Cuando marques un alimento como consumido o desechado, aquí verás tu avance.'}</p></div></div>
       <div class="duo"><div><b class="num c-fresco">${roll(ok, 'ok')}</b><span>aprovechados</span></div><div><b class="num c-vencido">${roll(bad, 'bad')}</b><span>desechados</span></div></div>
     </section>
     <section class="sec big-card glass" style="--i:2"><div class="sec-head"><h3>Por semana</h3></div>
       <div class="bars">${weeks.map((w, i) => `<div class="col"><div class="stack" style="--d:${i}">
-        ${w.ok ? `<i class="bg-fresco" style="height:${w.ok / max * 120}px;--d:${i}"></i>` : ''}${w.bad ? `<i style="background:var(--coral);height:${w.bad / max * 120}px;--d:${i}"></i>` : ''}</div>
+        ${w.ok ? `<i class="bg-fresco" style="height:${w.ok / max * 120}px;--d:${i}"></i>` : ''}${w.bad ? `<i class="bg-vencido" style="height:${w.bad / max * 120}px;--d:${i}"></i>` : ''}</div>
         <small class="num">${w.label}</small></div>`).join('')}</div>
-      <div class="legend"><span><span class="dot bg-fresco"></span>Aprovechado</span><span><span class="dot" style="background:var(--coral)"></span>Desechado</span></div>
+      <div class="legend"><span><span class="dot s-fresco"></span>Aprovechado</span><span><span class="dot s-vencido"></span>Desechado</span></div>
     </section>
     ${lost.length ? `<section class="sec big-card glass" style="--i:3"><div class="sec-head"><h3>Lo que más se te pasa</h3></div>
-      ${lost.map(([cat, n]) => `<div class="hbar"><span style="font-size:1.4rem">${CATS[cat]?.emoji}</span><span><small>${CATS[cat]?.label}</small><span class="track"><i style="width:${n / lmax * 100}%"></i></span></span><b class="num">${n}</b></div>`).join('')}
+      ${lost.map(([cat, n]) => `<div class="hbar">${catTile(cat, 'sm')}<span><small>${CATS[cat]?.label}</small><span class="track"><i style="width:${n / lmax * 100}%"></i></span></span><b class="num">${n}</b></div>`).join('')}
       <p class="hint" style="margin:12px 0 0">Tip: pon una pinza a estos alimentos en cuanto los abras.</p></section>` : ''}
     <section class="sec facts" style="--i:4">
       <div class="fact glass"><b class="num">80 kg</b><p>de alimento desperdicia al año cada persona en México.</p><small>Fuente: investigación del Parcial 1</small></div>
       <div class="fact glass"><b class="num">90.7%</b><p>de los hogares reporta desperdicio, sobre todo frutas y verduras.</p><small>Fuente: investigación del Parcial 1</small></div>
     </section>
     ${S.log.length ? `<section class="sec big-card glass" style="--i:5"><div class="sec-head"><h3>Historial</h3></div><div class="history">
-      ${S.log.slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 8).map(l => `<div class="h"><span>${CATS[l.cat]?.emoji || '🧺'}</span>
+      ${S.log.slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 8).map(l => `<div class="h">${catTile(l.cat, 'sm')}
         <span>${esc(l.name)}<br><small>${fmt(parse(l.date))}</small></span><span class="state ${l.action === 'consumido' ? 'c-fresco' : 'c-vencido'}">${l.action === 'consumido' ? 'Aprovechado' : 'Desechado'}</span></div>`).join('')}
     </div></section>` : ''}`;
 }
@@ -271,8 +288,8 @@ const SLIDES = [
   { t: 'Cierra el empaque', p: 'Al abrir un alimento, ciérralo con una pinza FRESHTAG. Abraza el empaque y lo mantiene fresco.', art: () => `<img class="art-kit" src="img/pinza-kit.jpg" alt="Pinzas FRESHTAG en crema, verde y coral cerrando empaques">` },
   { t: 'Acerca tu celular', p: 'Cada pinza tiene una etiqueta NFC sin baterías. Tu celular la lee y registra el alimento y la fecha en que lo abriste.', art: () => `<div class="art-nfc"><span class="wave"></span><span class="wave"></span><span class="wave"></span><img class="p" src="img/pinza-verde.jpg" alt=""><span class="phone">${I.nfc}</span></div>` },
   { t: 'Recibe el aviso', p: 'Te avisamos antes de que caduque y te sugerimos recetas con lo que está por vencer.', art: () => `<div class="art-alert">${[
-    ['🥛', 'Leche', 'porvencer', 'Vence mañana', .2], ['🍓', 'Fresas', 'fresco', '3 días', .6], ['🥛', 'Crema', 'vencido', 'Venció hace 2 días', 0]].map(([e, n, s, l, w]) =>
-    `<div class="item glass s-${s}"><span class="bubble">${e}</span><span><b>${n}</b><span class="meta">Refri</span></span><span class="right">${stateTag(s)}<span class="left num">${l}</span></span><span class="bar"><i style="width:${Math.max(w, .04) * 100}%"></i></span></div>`).join('')}</div>` },
+    ['lacteos', 'Leche', 'porvencer', 1, .2], ['frutas', 'Fresas', 'fresco', 3, .6], ['lacteos', 'Crema', 'vencido', -2, 0]].map(([c, n, s, l, w]) =>
+    `<div class="item glass s-${s}">${catTile(c)}<span class="item-main"><b>${n}</b><span class="meta">Refri</span><span class="row2">${stateTag(s)}${meter(w, s)}</span></span><span class="days s-${s}">${daysBig(l)}</span></div>`).join('')}</div>` },
 ];
 function viewOnb() {
   if (ui.onb < SLIDES.length) {
@@ -301,7 +318,7 @@ const TITLES = { inicio: 'Mi cocina', despensa: 'Despensa', recetas: 'Recetas', 
 function applyTheme() {
   const r = document.documentElement;
   r.dataset.theme = S.prefs.theme; r.classList.toggle('big', !!S.prefs.bigText);
-  $('meta[name=theme-color]')?.setAttribute('content', S.prefs.theme === 'light' ? '#F4F0E6' : '#071226');
+  $('meta[name=theme-color]')?.setAttribute('content', S.prefs.theme === 'light' ? '#F9F6EF' : '#0B1A2F');
   const desk = $('.desk .logo'); if (desk) desk.src = logoSrc();
   window.ReactNativeWebView?.postMessage(JSON.stringify({ type: 'theme', theme: S.prefs.theme }));
 }
@@ -382,7 +399,7 @@ function openItem(id) {
   const x = info(it), p = pinzaOf(it.pinza), cat = CATS[it.cat];
   const big = x.left < 0 ? `<b class="num c-vencido">${-x.left}</b><small>${-x.left === 1 ? 'día vencido' : 'días vencido'}</small>`
     : x.left === 0 ? `<b class="c-porvencer">Hoy</b><small>vence</small>` : `<b class="num c-${x.state}">${x.left}</b><small>${x.left === 1 ? 'día restante' : 'días restantes'}</small>`;
-  openSheet(`<div class="d-head"><span class="bubble">${cat?.emoji || '🧺'}</span><div><h2>${esc(it.name)}</h2>${stateTag(x.state)}</div></div>
+  openSheet(`<div class="d-head">${catTile(it.cat, 'lg')}<div><h2>${esc(it.name)}</h2>${stateTag(x.state)}</div></div>
     <div class="d-ring">${ring(x.pct, COLOR[x.state], 168, 12, big)}</div>
     <div class="rows glass">
       <div class="r"><span>Abierto</span><b>${fmt(parse(it.opened))}</b></div>
@@ -412,9 +429,9 @@ function formHTML() {
   return `<h2>${F.id ? 'Editar alimento' : 'Registrar alimento'}</h2>
     ${p ? `<span class="pin-chip">${pz(p)} Con ${esc(p.name.toLowerCase())}</span>` : '<p class="hint" style="margin:0">Sin pinza: lo registras a mano.</p>'}
     <label class="field"><span>¿Qué abriste?</span><input class="input" id="f-name" value="${esc(F.name)}" placeholder="Ej. Leche" autocomplete="off" enterkeyhint="done"></label>
-    ${F.id ? '' : `<div class="chips" style="margin-top:10px">${QUICK.map(([n, c]) => `<button class="chip" data-act="quick" data-n="${esc(n)}" data-c="${c}">${CATS[c].emoji} ${n}</button>`).join('')}</div>`}
+    ${F.id ? '' : `<div class="chips" style="margin-top:10px">${QUICK.map(([n, c]) => `<button class="chip" data-act="quick" data-n="${esc(n)}" data-c="${c}">${foodIcon(CATS[c].icon)} ${n}</button>`).join('')}</div>`}
     <div class="field"><span>Categoría</span><div class="pick-grid">${Object.entries(CATS).map(([k, c]) =>
-      `<button class="cat ${F.cat === k ? 'on' : ''}" data-act="cat" data-c="${k}"><span>${c.emoji}</span>${c.label}</button>`).join('')}</div></div>
+      `<button class="cat ${F.cat === k ? 'on' : ''}" data-act="cat" data-c="${k}">${catTile(k, 'sm')}${c.label}</button>`).join('')}</div></div>
     <div class="field"><span>¿Dónde lo guardas?</span><div class="seg" data-seg="fplace"><span class="knob"></span>${Object.entries(PLACES).map(([k, v]) =>
       `<button class="${F.place === k ? 'on' : ''}" data-act="fplace" data-p="${k}">${v.label}</button>`).join('')}</div></div>
     <label class="field"><span>Lo abriste el</span><input class="input" id="f-date" type="date" value="${F.opened}" max="${iso(today())}"></label>
@@ -451,7 +468,7 @@ function setCat(c) {
 function openRecipe(id) {
   const m = matchRecipes().find(m => m.r.id === id); if (!m) return;
   const sel = new Set(m.used.filter(x => x.state === 'porvencer').map(x => x.it.id));
-  const draw = () => `<div class="d-head"><span class="bubble">${m.r.emoji}</span><div><h2>${m.r.name}</h2>
+  const draw = () => `<div class="d-head"><span class="tile t-azul lg">${foodIcon(m.r.icon)}</span><div><h2>${m.r.name}</h2>
       <span class="meta-line" style="margin:0">${I.clock}<span class="num">${m.r.min} min</span></span></div></div>
     ${m.used.length ? `<h4>De tu cocina</h4>${m.used.map(x => `<button class="check ${sel.has(x.it.id) ? 'on' : ''}" data-act="rsel" data-id="${x.it.id}">
       <span class="box">${I.check}</span><span style="flex:1"><b>${esc(x.it.name)}</b><br><span class="hint">${leftText(x.left)}</span></span>${stateTag(x.state)}</button>`).join('')}` : ''}
@@ -481,7 +498,7 @@ function openProfile() {
       <button class="btn btn-ghost block" data-act="pair">${I.plus} Vincular otra pinza</button></div>
     <p class="hint" style="margin:10px 2px 0">${NFC ? 'Con el lápiz grabas el enlace de la pinza en una etiqueta NFC: así también funciona en iPhone.' : 'Con el enlace de cada pinza puedes programar una etiqueta NFC (por ejemplo con la app NFC Tools): al acercar el iPhone, se abre FRESHTAG en esa pinza.'}</p>
     <h4>Preferencias</h4><div class="rows glass" style="padding:0 16px">
-      ${sw(S.prefs.theme === 'light', 'theme-toggle', 'Modo claro', 'Cambia entre el tema oscuro y el claro')}
+      ${sw(S.prefs.theme === 'dark', 'theme-toggle', 'Modo oscuro', 'Fondo azul noche para usar de noche')}
       ${sw(S.prefs.notif && 'Notification' in window && Notification.permission === 'granted', 'notif-toggle', 'Avisos', 'Una notificación al día con lo que está por vencer')}
       ${sw(S.prefs.bigText, 'big-toggle', 'Texto grande', 'Aumenta el tamaño de toda la app')}</div>
     ${S.prefs.notif ? `<button class="link" style="margin-top:12px" data-act="notif-test">${I.bell} Enviar un aviso de prueba</button>` : ''}
@@ -614,7 +631,7 @@ function toast(msg, icon = 'check') {
 }
 function burst(el) {
   const phone = $('#phone').getBoundingClientRect(), r = el?.getBoundingClientRect() || { left: phone.width / 2, top: phone.height / 2, width: 0, height: 0 };
-  const colors = ['#3B8970', '#E96958', '#2A5082', '#E8A33D', '#5FB396'];
+  const colors = ['#3B8970', '#E96958', '#2A5082', '#E8A33D', '#2F7A62'];
   for (let i = 0; i < 22; i++) {
     const c = document.createElement('i'); c.className = 'confetti';
     const a = Math.random() * Math.PI * 2, d = 60 + Math.random() * 120;
