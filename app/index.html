@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#071226">
+  <meta name="description" content="FRESHTAG: registra tus alimentos con pinzas NFC, recibe avisos antes de que caduquen y cocina lo que está por vencer.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="FRESHTAG">
+  <title>FRESHTAG</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="img/icon-192.png">
+  <link rel="apple-touch-icon" href="img/icon-192.png">
+  <link rel="stylesheet" href="css/fonts.css">
+  <link rel="stylesheet" href="css/app.css">
+  <script>try { var s = JSON.parse(localStorage.getItem('freshtag:v1')); if (s && s.prefs && s.prefs.theme === 'light') document.documentElement.dataset.theme = 'light'; } catch (e) {}</script>
+</head>
+<body>
+  <aside class="desk">
+    <img class="logo" src="img/logo-negativo.svg" alt="FRESHTAG">
+    <h1>Lo que no se ve, se olvida.</h1>
+    <p>Prototipo funcional de la app FRESHTAG: registra alimentos con las pinzas NFC, mira su frescura en semáforo, recibe avisos y cocina primero lo que está por vencer.</p>
+    <div class="qr"><img src="img/qr.svg" alt="Código QR para abrir la app en tu celular"><p><b>Ábrela en tu celular.</b><br>En Android con Chrome lee las pinzas NFC reales; en iPhone, abre la pinza con su enlace o usa la simulación.</p></div>
+    <small>Equipo 6 · Prácticum II · Escuela de Diseño · 2026-60</small>
+  </aside>
+  <div id="phone">
+    <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div id="app"></div>
+    <div id="sheet-root"></div>
+    <div id="scan-root"></div>
+    <div id="toast-root"></div>
+    <div id="splash" aria-hidden="true"><span class="orb"><img src="img/isotipo.svg" alt=""></span><img src="img/wordmark.svg" alt=""></div>
+  </div>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
