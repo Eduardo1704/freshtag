@@ -303,6 +303,7 @@ function applyTheme() {
   r.dataset.theme = S.prefs.theme; r.classList.toggle('big', !!S.prefs.bigText);
   $('meta[name=theme-color]')?.setAttribute('content', S.prefs.theme === 'light' ? '#F4F0E6' : '#071226');
   const desk = $('.desk .logo'); if (desk) desk.src = logoSrc();
+  window.ReactNativeWebView?.postMessage(JSON.stringify({ type: 'theme', theme: S.prefs.theme }));
 }
 function render(animate = false) {
   applyTheme();
