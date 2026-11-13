@@ -41,45 +41,7 @@ export const KIT = [
   { id: 'FT-CORAL', name: 'Pinza coral', color: 'coral' },
 ];
 
-// `uses`: category keys, or `n:<word>` to match the item name (so Tortillas don't count as bread).
-export const RECIPES = [
-  { id: 'chilaquiles', name: 'Chilaquiles verdes', icon: 'flame', emoji: '🫓', min: 20, uses: ['n:tortilla', 'salsas', 'n:crema', 'queso', 'huevo'],
-    ing: ['Tortillas del día anterior', 'Salsa verde', 'Crema', 'Queso', 'Huevo (opcional)'],
-    steps: ['Corta las tortillas en triángulos y dóralas en poco aceite.', 'Agrega la salsa verde y deja que hierva 2 minutos.', 'Sirve con crema, queso y, si quieres, un huevo estrellado.'] },
-  { id: 'licuado', name: 'Licuado de plátano y fresa', icon: 'cup-soda', emoji: '🥤', min: 5, uses: ['n:plátano', 'n:fresa', 'n:leche', 'n:yogur'],
-    ing: ['Leche o yogur', 'Plátano', 'Fresas', 'Miel al gusto'],
-    steps: ['Lava y corta la fruta.', 'Licúa con la leche o el yogur.', 'Sirve frío. La fruta muy madura lo hace más dulce.'] },
-  { id: 'omelette', name: 'Omelette de espinaca y queso', icon: 'egg-fried', emoji: '🍳', min: 10, uses: ['huevo', 'n:espinaca', 'verduras', 'queso', 'n:jamón'],
-    ing: ['2 huevos', 'Espinaca', 'Queso', 'Jamón (opcional)'],
-    steps: ['Bate los huevos con sal.', 'Saltea la espinaca un minuto.', 'Vierte el huevo, agrega el queso y dobla a la mitad.'] },
-  { id: 'molletes', name: 'Molletes', icon: 'sandwich', emoji: '🥖', min: 15, uses: ['n:pan', 'n:bolillo', 'queso', 'salsas', 'n:jitomate', 'n:frijol'],
-    ing: ['Pan', 'Frijoles', 'Queso', 'Pico de gallo o salsa'],
-    steps: ['Abre el pan y úntale frijoles.', 'Cubre con queso y gratina 8 minutos.', 'Termina con pico de gallo o salsa.'] },
-  { id: 'arroz-pollo', name: 'Arroz con pollo', icon: 'drumstick', emoji: '🍛', min: 30, uses: ['pollo', 'n:arroz', 'verduras'],
-    ing: ['Pollo', 'Arroz cocido', 'Verduras picadas', 'Caldo'],
-    steps: ['Dora el pollo en trozos.', 'Agrega las verduras y el arroz.', 'Moja con caldo y cocina hasta que se absorba.'] },
-  { id: 'pan-frances', name: 'Pan francés', icon: 'croissant', emoji: '🍞', min: 15, uses: ['n:pan', 'n:leche', 'huevo', 'n:fresa', 'n:plátano'],
-    ing: ['Pan de caja', 'Leche', 'Huevo', 'Canela', 'Fruta para servir'],
-    steps: ['Mezcla leche, huevo y canela.', 'Remoja el pan y dóralo por ambos lados.', 'Sirve con fruta picada.'] },
-  { id: 'sopa', name: 'Sopa de verduras', icon: 'soup', emoji: '🥣', min: 25, uses: ['verduras', 'n:jitomate'],
-    ing: ['Verduras que tengas', 'Jitomate', 'Caldo', 'Sal y pimienta'],
-    steps: ['Pica todas las verduras.', 'Licúa el jitomate y sofríelo.', 'Agrega caldo y verduras; hierve 15 minutos.'] },
-  { id: 'quesadillas', name: 'Quesadillas', icon: 'cheese', emoji: '🌮', min: 10, uses: ['n:tortilla', 'queso', 'embutidos', 'salsas'],
-    ing: ['Tortillas', 'Queso', 'Jamón (opcional)', 'Salsa'],
-    steps: ['Calienta la tortilla en el comal.', 'Agrega queso y jamón; dobla.', 'Voltea hasta que el queso se derrita.'] },
-  { id: 'ensalada-pollo', name: 'Ensalada de pollo', icon: 'salad', emoji: '🥗', min: 15, uses: ['pollo', 'verduras', 'n:yogur', 'n:crema', 'n:aguacate'],
-    ing: ['Pollo cocido', 'Verduras', 'Yogur o crema', 'Aguacate'],
-    steps: ['Deshebra el pollo.', 'Mezcla con verduras picadas y yogur.', 'Sirve con aguacate.'] },
-  { id: 'parfait', name: 'Parfait de yogur', icon: 'ice-cream-bowl', emoji: '🍨', min: 5, uses: ['n:yogur', 'n:fresa', 'n:plátano', 'n:cereal', 'n:granola'],
-    ing: ['Yogur natural', 'Fruta picada', 'Cereal o granola'],
-    steps: ['Pon una capa de yogur en un vaso.', 'Agrega fruta y cereal.', 'Repite las capas y sirve.'] },
-  { id: 'guacamole', name: 'Guacamole', icon: 'leafy-green', emoji: '🥑', min: 10, uses: ['n:aguacate', 'n:jitomate', 'n:cebolla', 'n:totopo'],
-    ing: ['Aguacate', 'Jitomate', 'Cebolla y cilantro', 'Limón', 'Totopos'],
-    steps: ['Machaca el aguacate con limón y sal.', 'Agrega jitomate, cebolla y cilantro picados.', 'Sirve con totopos.'] },
-  { id: 'tacos', name: 'Tacos de carne', icon: 'beef', emoji: '🌯', min: 20, uses: ['carne', 'n:tortilla', 'salsas'],
-    ing: ['Carne', 'Tortillas', 'Cebolla y cilantro', 'Salsa'],
-    steps: ['Cocina la carne con sal.', 'Calienta las tortillas.', 'Arma los tacos con cebolla, cilantro y salsa.'] },
-];
+export { RECIPES } from './recipes.js';
 
 // Demo household: dates are relative to today so the semáforo always shows all three states.
 export function demoSeed() {

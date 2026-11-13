@@ -1,0 +1,166 @@
+// FRESHTAG app · recipes, rewritten in our own words from published Mexican home-cooking recipes (each one links its source).
+// `uses`: category keys, or `n:<word>` to match the item name (so Tortillas don't count as bread).
+// `ing`: [quantity, ingredient]. `steps`: { t: text, min?: minutes } — `min` adds a timer chip to that step.
+
+export const RECIPES = [
+  { id: 'chilaquiles', name: 'Chilaquiles verdes', icon: 'flame', min: 25, serves: 2, level: 'Fácil',
+    uses: ['n:tortilla', 'salsas', 'n:crema', 'queso', 'huevo', 'n:cebolla', 'n:aguacate'],
+    ing: [['8', 'tortillas de maíz (mejor si son del día anterior)'], ['1 ½ tazas', 'salsa verde'], ['½ taza', 'caldo de pollo o agua'],
+      ['¼ taza', 'aceite'], ['¼ taza', 'crema'], ['60 g', 'queso fresco desmoronado'], ['¼', 'cebolla morada en rodajas'],
+      ['2', 'huevos (opcional)'], ['', 'cilantro y aguacate para servir']],
+    steps: [
+      { t: 'Corta las tortillas en 6 triángulos cada una. Si están muy frescas, déjalas secar 15 minutos extendidas para que no absorban tanto aceite.' },
+      { t: 'Calienta el aceite en una sartén amplia a fuego medio y fríe los totopos por tandas hasta que estén dorados y crujientes. Escúrrelos sobre papel absorbente.', min: 6 },
+      { t: 'En otra sartén calienta la salsa verde con el caldo. Cuando hierva, baja el fuego y cocina para que espese un poco.', min: 4 },
+      { t: 'Agrega los totopos a la salsa y mézclalos con cuidado para que no se rompan. Retira del fuego en 1 minuto si los quieres crujientes, o déjalos 3 minutos si los prefieres suaves.' },
+      { t: 'Mientras tanto, prepara los huevos estrellados o revueltos, si los vas a usar.', min: 3 },
+      { t: 'Sirve de inmediato con crema, queso, cebolla morada, cilantro y rebanadas de aguacate.' }],
+    tip: 'Es la mejor forma de aprovechar tortillas que ya están duras: fríen mejor que las recién hechas.',
+    src: { name: 'Cocina Fácil', url: 'https://www.cocinafacil.com.mx/recetas/chilaquiles-verdes-con-huevo' } },
+
+  { id: 'licuado', name: 'Licuado de fresa y plátano', icon: 'cup-soda', min: 5, serves: 2, level: 'Fácil',
+    uses: ['n:plátano', 'n:fresa', 'n:leche', 'n:yogur', 'n:granola', 'n:avena'],
+    ing: [['1 taza', 'fresas lavadas y sin hojas'], ['1', 'plátano maduro'], ['2 tazas', 'leche fría'], ['3 cdas', 'yogur natural'],
+      ['¼ taza', 'granola o avena (opcional)'], ['1 cda', 'miel, al gusto'], ['4', 'cubos de hielo']],
+    steps: [
+      { t: 'Desinfecta las fresas, quítales las hojas y córtalas a la mitad. Pela el plátano y pártelo en trozos.' },
+      { t: 'Pon en la licuadora la fruta, la leche, el yogur, la granola y la miel.' },
+      { t: 'Licúa a velocidad alta hasta que no queden grumos; agrega el hielo y vuelve a licuar unos segundos.', min: 1 },
+      { t: 'Prueba y ajusta: más leche si lo quieres ligero, más plátano si lo quieres espeso. Sirve de inmediato.' }],
+    tip: 'Los plátanos con manchas cafés son los más dulces: aquí no se nota que ya estaban muy maduros. También puedes congelarlos en rodajas para otro licuado.',
+    src: { name: 'Cocina Fácil', url: 'https://www.cocinafacil.com.mx/recetas/licuado-de-fresa-con-platano' } },
+
+  { id: 'omelette', name: 'Omelette de espinaca y queso', icon: 'egg-fried', min: 12, serves: 1, level: 'Fácil',
+    uses: ['huevo', 'n:espinaca', 'queso', 'n:cebolla', 'n:jitomate'],
+    ing: [['2', 'huevos'], ['1 taza', 'espinaca lavada y picada'], ['50 g', 'queso panela en cubos u Oaxaca deshebrado'],
+      ['2 cdas', 'cebolla picada'], ['1 cda', 'mantequilla o aceite'], ['', 'sal y pimienta']],
+    steps: [
+      { t: 'Calienta la mitad de la mantequilla en una sartén antiadherente a fuego medio. Acitrona la cebolla y agrega la espinaca solo hasta que se marchite. Retira y reserva.', min: 2 },
+      { t: 'Bate los huevos con una pizca de sal y pimienta hasta que se integren las claras y las yemas.' },
+      { t: 'Derrite el resto de la mantequilla, vierte el huevo y mueve la sartén para que cubra todo el fondo. Cocina a fuego medio-bajo sin revolver.', min: 2 },
+      { t: 'Cuando la superficie esté casi cuajada, pon la espinaca y el queso sobre una mitad.' },
+      { t: 'Dobla la otra mitad encima y cocina 1 o 2 minutos más, hasta que el queso se derrita. Sirve caliente.', min: 2 }],
+    tip: 'Las espinacas que ya se ven un poco lacias funcionan perfecto: al cocinarlas nadie lo nota.',
+    src: { name: 'Cocina Delirante', url: 'https://www.cocinadelirante.com/recetas/nutritivo-omelette-de-espinacas-con-queso-panela-y-de-cabra' } },
+
+  { id: 'molletes', name: 'Molletes con pico de gallo', icon: 'sandwich', min: 20, serves: 2, level: 'Fácil',
+    uses: ['n:pan', 'n:bolillo', 'queso', 'n:frijol', 'n:jitomate', 'n:cebolla', 'embutidos'],
+    ing: [['2', 'bolillos o teleras'], ['1 taza', 'frijoles refritos'], ['1 taza', 'queso Chihuahua o manchego rallado'],
+      ['1 cda', 'mantequilla'], ['1', 'jitomate'], ['¼', 'cebolla'], ['1', 'chile serrano'], ['', 'cilantro, limón y sal']],
+    steps: [
+      { t: 'Precalienta el horno o el tostador a 200 °C.', min: 5 },
+      { t: 'Parte los bolillos a lo largo, retira un poco de migajón y unta una capa ligera de mantequilla.' },
+      { t: 'Cubre cada mitad con frijoles refritos calientes y después con el queso rallado.' },
+      { t: 'Hornea hasta que el pan esté dorado en las orillas y el queso burbujee.', min: 10 },
+      { t: 'Mientras tanto, pica finamente el jitomate, la cebolla, el chile y el cilantro; mézclalos con jugo de limón y sal.' },
+      { t: 'Sirve los molletes calientes con el pico de gallo encima.' }],
+    tip: 'El pan de ayer queda más crujiente en el horno. Si te sobró jamón o chorizo, agrégalo antes del queso.',
+    src: { name: 'Recetas Nestlé', url: 'https://www.recetasnestle.com.mx/recetas/molletes-pico-gallo' } },
+
+  { id: 'arroz-pollo', name: 'Arroz rojo con pollo', icon: 'drumstick', min: 35, serves: 4, level: 'Media',
+    uses: ['pollo', 'n:arroz', 'verduras', 'n:jitomate', 'n:zanahoria', 'n:chícharo'],
+    ing: [['1 taza', 'arroz'], ['1', 'pechuga de pollo en cubos'], ['2 tazas', 'caldo de pollo caliente'], ['2', 'jitomates'],
+      ['½', 'cebolla'], ['2', 'dientes de ajo'], ['1 taza', 'verduras picadas (zanahoria, chícharo, elote)'], ['3 cdas', 'aceite'], ['', 'sal']],
+    steps: [
+      { t: 'Enjuaga el arroz en un colador hasta que el agua salga clara y déjalo escurrir bien.' },
+      { t: 'Licúa los jitomates con la cebolla y el ajo; cuela el puré.' },
+      { t: 'Calienta el aceite en una olla y dora el pollo sazonado con sal. Retíralo y reserva.', min: 5 },
+      { t: 'En la misma olla fríe el arroz, moviendo seguido, hasta que se vea opaco y suene al moverlo.', min: 4 },
+      { t: 'Agrega el puré de jitomate y cocina hasta que cambie de color. Añade el caldo, el pollo, las verduras y sal.', min: 3 },
+      { t: 'Cuando hierva, baja el fuego al mínimo, tapa y cocina sin destapar.', min: 15 },
+      { t: 'Apaga, deja reposar tapado 5 minutos y esponja con un tenedor antes de servir.', min: 5 }],
+    tip: 'Aprovecha aquí las verduras sueltas del refri: media zanahoria, un poco de calabacita o elote suman sin cambiar la receta.',
+    src: { name: 'Cocina Delirante', url: 'https://www.cocinadelirante.com/recetas/como-hacer-arroz-rojo-con-pollo-en-una-olla-receta-de-la-abuela' } },
+
+  { id: 'pan-frances', name: 'Pan francés con canela', icon: 'croissant', min: 15, serves: 2, level: 'Fácil',
+    uses: ['n:pan', 'n:leche', 'huevo', 'n:fresa', 'n:plátano', 'n:bolillo'],
+    ing: [['6', 'rebanadas de pan de caja o bolillo del día anterior'], ['2', 'huevos'], ['1 taza', 'leche'], ['1 cdita', 'canela molida'],
+      ['1 cdita', 'vainilla'], ['2 cdas', 'mantequilla'], ['2 cdas', 'azúcar mezclada con canela'], ['', 'fruta picada y miel para servir']],
+    steps: [
+      { t: 'Bate en un plato hondo los huevos, la leche, la canela y la vainilla.' },
+      { t: 'Remoja cada rebanada en la mezcla unos segundos por lado; si el pan está muy duro, déjalo hasta 1 minuto para que se suavice por dentro.' },
+      { t: 'Derrite un poco de mantequilla en una sartén a fuego medio y dora el pan por ambos lados.', min: 4 },
+      { t: 'Recién salido de la sartén, espolvorea el azúcar con canela: se pega mejor mientras está caliente.' },
+      { t: 'Sirve con fruta picada y un hilo de miel.' }],
+    tip: 'Es la receta ideal para el pan que ya se está endureciendo: absorbe mejor la mezcla que el pan fresco.',
+    src: { name: 'Cocina Fácil', url: 'https://www.cocinafacil.com.mx/recetas/como-hacer-pan-frances-en-3-sencillos-pasos' } },
+
+  { id: 'sopa', name: 'Sopa de verduras', icon: 'soup', min: 35, serves: 4, level: 'Fácil',
+    uses: ['verduras', 'n:jitomate', 'n:zanahoria', 'n:calabacita', 'n:papa', 'n:espinaca'],
+    ing: [['2', 'zanahorias en cubos'], ['2', 'calabacitas en cubos'], ['1', 'papa en cubos'], ['1 taza', 'col o espinaca picada'],
+      ['2', 'jitomates'], ['¼', 'cebolla'], ['1', 'diente de ajo'], ['1.5 L', 'caldo de pollo o de verduras'], ['1 cda', 'aceite'], ['', 'sal, pimienta y limón']],
+    steps: [
+      { t: 'Licúa los jitomates con la cebolla y el ajo.' },
+      { t: 'Calienta el aceite en una olla y sofríe la zanahoria y la papa.', min: 3 },
+      { t: 'Agrega el puré de jitomate colado y cocina hasta que se oscurezca y espese.', min: 4 },
+      { t: 'Vierte el caldo y deja que hierva. Añade la calabacita y cocina a fuego medio.', min: 12 },
+      { t: 'Agrega la col o la espinaca al final, sazona con sal y pimienta y cocina hasta que todo esté suave.', min: 3 },
+      { t: 'Sirve caliente con unas gotas de limón.' }],
+    tip: 'Cualquier verdura que esté por vencer entra aquí. La sopa dura 3 días en el refri o un mes congelada en porciones.',
+    src: { name: 'Cocina Fácil', url: 'https://www.cocinafacil.com.mx/recetas/sopa-de-verduras-receta-tradicional' } },
+
+  { id: 'quesadillas', name: 'Quesadillas de jamón y queso', icon: 'cheese', min: 12, serves: 2, level: 'Fácil',
+    uses: ['n:tortilla', 'queso', 'embutidos', 'salsas', 'n:calabacita'],
+    ing: [['6', 'tortillas de maíz o de harina'], ['150 g', 'queso Oaxaca o Chihuahua'], ['4', 'rebanadas de jamón en tiras'],
+      ['½', 'calabacita rallada (opcional)'], ['', 'salsa al gusto']],
+    steps: [
+      { t: 'Calienta el comal a fuego medio. Si usas calabacita, saltéala 2 minutos con sal y mézclala con el jamón.', min: 2 },
+      { t: 'Calienta una tortilla por un lado, voltéala y pon queso en una mitad, el jamón y otro poco de queso encima.' },
+      { t: 'Dobla y cocina por ambos lados hasta que la tortilla esté dorada y el queso se derrita.', min: 3 },
+      { t: 'Repite con el resto y sirve con tu salsa favorita.' }],
+    tip: 'No las llenes de más para que la tortilla no se rompa. El queso que ya está por vencer funciona igual de bien derretido.',
+    src: { name: 'Cocina Delirante', url: 'https://www.cocinadelirante.com/recetas/rellenos-de-quesadillas-que-no-son-solo-queso-faciles-y-rapidos' } },
+
+  { id: 'ensalada-pollo', name: 'Ensalada de pollo y aguacate', icon: 'salad', min: 20, serves: 2, level: 'Fácil',
+    uses: ['pollo', 'verduras', 'n:yogur', 'n:crema', 'n:aguacate', 'n:mango', 'n:apio'],
+    ing: [['2 tazas', 'pollo cocido o rostizado, deshebrado'], ['1', 'aguacate en cubos'], ['½ taza', 'apio o pepino picado'],
+      ['¼', 'cebolla morada picada'], ['½ taza', 'yogur natural o griego'], ['1', 'limón (el jugo)'], ['', 'cilantro, sal y pimienta'], ['', 'hojas verdes o tostadas para servir']],
+    steps: [
+      { t: 'Mezcla en un tazón el jugo de limón con el yogur, sal y pimienta para hacer el aderezo.' },
+      { t: 'Agrega el pollo, el apio y la cebolla, y revuelve hasta cubrir todo.' },
+      { t: 'Incorpora el aguacate al final, con movimientos suaves para que no se haga puré, y el cilantro picado.' },
+      { t: 'Refrigera unos minutos para que se integren los sabores y sirve sobre hojas verdes o tostadas.', min: 15 }],
+    tip: 'Funciona con pollo que sobró de otra comida; si tienes medio mango, agrégalo para darle un toque dulce.',
+    src: { name: 'Cocina Delirante', url: 'https://cocinadelirante.com/receta/ensalada/ensalada-de-pollo-y-aguacate-saludable' } },
+
+  { id: 'parfait', name: 'Parfait de yogur, fruta y granola', icon: 'ice-cream-bowl', min: 8, serves: 2, level: 'Fácil',
+    uses: ['n:yogur', 'n:fresa', 'n:plátano', 'n:cereal', 'n:granola', 'frutas'],
+    ing: [['2 tazas', 'yogur natural o griego'], ['1 taza', 'fresas'], ['1', 'plátano'], ['¾ taza', 'granola o cereal'], ['2 cdas', 'miel']],
+    steps: [
+      { t: 'Desinfecta las fresas y córtalas en cuartos; mézclalas con la mitad de la miel.' },
+      { t: 'Corta el plátano en rodajas y báñalas con el resto de la miel para que no se oscurezcan.' },
+      { t: 'En dos vasos, pon una capa de yogur, una de granola y una de fruta.' },
+      { t: 'Repite las capas y termina con granola. Sirve de inmediato para que siga crujiente.' }],
+    tip: 'Arma la granola justo antes de comer; si la dejas mucho tiempo con el yogur, se ablanda.',
+    src: { name: 'Cocina Fácil', url: 'https://www.cocinafacil.com.mx/recetas/granola-con-yogurt' } },
+
+  { id: 'guacamole', name: 'Guacamole tradicional', icon: 'leafy-green', min: 10, serves: 4, level: 'Fácil',
+    uses: ['n:aguacate', 'n:jitomate', 'n:cebolla', 'n:totopo', 'n:limón'],
+    ing: [['3', 'aguacates maduros'], ['1', 'jitomate sin semillas'], ['¼', 'cebolla'], ['1', 'chile serrano'],
+      ['2 cdas', 'cilantro picado'], ['2', 'limones (el jugo)'], ['', 'sal'], ['', 'totopos para servir']],
+    steps: [
+      { t: 'Pica finamente la cebolla, el chile y el cilantro; corta el jitomate en cubos pequeños.' },
+      { t: 'Parte los aguacates, retira el hueso y machaca la pulpa con un tenedor o en molcajete, dejando algunos trozos.' },
+      { t: 'Agrega el jugo de limón y sal, y mezcla.' },
+      { t: 'Incorpora la cebolla, el chile y el cilantro; al final agrega el jitomate con cuidado para que no suelte agua.' },
+      { t: 'Sirve con totopos. Si lo guardas, cubre el guacamole con plástico pegado a la superficie.' }],
+    tip: 'Usa primero los aguacates que ya ceden al presionarlos: el guacamole es su mejor destino.',
+    src: { name: 'Cocina Fácil', url: 'https://www.cocinafacil.com.mx/recetas/receta-de-guacamole-tradicional' } },
+
+  { id: 'tacos', name: 'Tacos de bistec con papas', icon: 'beef', min: 30, serves: 4, level: 'Media',
+    uses: ['carne', 'n:tortilla', 'salsas', 'n:papa', 'n:cebolla'],
+    ing: [['500 g', 'bistec de res en cubos pequeños'], ['2', 'papas en cubos chicos'], ['1', 'cebolla'], ['1', 'chile serrano'],
+      ['1 cda', 'salsa inglesa'], ['½ cdita', 'comino'], ['2 cdas', 'aceite'], ['12', 'tortillas de maíz'], ['', 'cilantro, limón y salsa']],
+    steps: [
+      { t: 'Sazona la carne con salsa inglesa, comino y sal; deja reposar mientras preparas lo demás.', min: 10 },
+      { t: 'Cuece las papas en agua con sal hasta que estén suaves pero firmes; escúrrelas.', min: 8 },
+      { t: 'Calienta el aceite a fuego alto y dora la carne sin moverla demasiado.', min: 5 },
+      { t: 'Agrega la mitad de la cebolla en tiras, el chile picado y las papas; cocina hasta que las papas se doren.', min: 5 },
+      { t: 'Calienta las tortillas en el comal y arma los tacos con la carne.' },
+      { t: 'Sirve con cebolla y cilantro picados, limón y salsa.' }],
+    tip: 'Si la carne lleva días en el refri, cocínala hoy: también puedes guardar los tacos ya cocidos y recalentarlos.',
+    src: { name: 'Cocina Delirante', url: 'https://www.cocinadelirante.com/recetas/deliciosos-tacos-de-bistec-con-papas-estilo-taqueria-receta-rendidora' } },
+];
+
+// Live web search for the user's own leftovers: Mexican recipe sites first.
+export const webSearch = names => `https://www.google.com/search?q=${encodeURIComponent(`receta con ${names.join(' ')} site:cocinafacil.com.mx OR site:recetasnestle.com.mx OR site:cocinadelirante.com OR site:kiwilimon.com`)}`;

@@ -3,6 +3,8 @@
 // iPhone touching a programmed pinza opens the app straight on that pinza.
 import { CATS, PLACES, FREEZER_DAYS, QUICK, KIT, RECIPES, demoSeed } from './data.js';
 import { FOOD } from './icons.js';
+import { webSearch } from './recipes.js';
+import { feedback, initFeedback, NOTIF_VIBRATE } from './feedback.js';
 
 const KEY = 'freshtag:v1';
 const DAY = 864e5;
@@ -40,15 +42,24 @@ const P = {
   phone: '<rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/>',
   tag: '<path d="M12.59 2.59A2 2 0 0 0 11.17 2H4a2 2 0 0 0-2 2v7.17a2 2 0 0 0 .59 1.42l8.7 8.7a2.43 2.43 0 0 0 3.42 0l6.58-6.58a2.43 2.43 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r="1"/>',
   write: '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+  volume: '<path d="M11 4.7a.7.7 0 0 0-1.2-.5L6.4 7.6A1.4 1.4 0 0 1 5.4 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.4a1.4 1.4 0 0 1 1 .4l3.4 3.4a.7.7 0 0 0 1.2-.5z"/><path d="M16 9a5 5 0 0 1 0 6M19.4 18.4a9 9 0 0 0 0-12.8"/>',
+  vibe: '<path d="m2 8 2 2-2 2 2 2-2 2M22 8l-2 2 2 2-2 2 2 2"/><rect width="8" height="14" x="8" y="5" rx="1"/>',
+  ext: '<path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+  gauge: '<path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/>',
+  timer: '<path d="M10 2h4M12 14l3-3"/><circle cx="12" cy="14" r="8"/>',
+  bulb: '<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5M9 18h6M10 22h4"/>',
   link: '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
 };
 const I = new Proxy({}, { get: (_, k) => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${P[k] || ''}</svg>` });
 
 // ---------- state ----------
-const fresh = () => ({ user: null, pinzas: KIT.map(p => ({ ...p })), items: [], log: [], prefs: { bigText: false, notif: false, theme: 'light', v3: true }, notified: '' });
+const fresh = () => ({ user: null, pinzas: KIT.map(p => ({ ...p })), items: [], log: [], prefs: { bigText: false, notif: false, theme: 'light', v3: true, sound: true, vibe: true }, notified: '' });
 let S;
 try { S = JSON.parse(localStorage.getItem(KEY)) || fresh(); } catch { S = fresh(); }
 if (!S.prefs.v3) { S.prefs.theme = 'light'; S.prefs.v3 = true; } // v3: the brand manual asks for a cream background
+if (S.prefs.sound === undefined) { S.prefs.sound = true; S.prefs.vibe = true; } // v4 adds sound + vibration
+initFeedback(() => S.prefs);
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch { /* private mode: state stays in memory */ } };
 
 const ui = { tab: 'inicio', filter: 'todos', place: 'todo', q: '', onb: 0, pendingTag: null };
@@ -235,11 +246,21 @@ function viewRecetas() {
   return `<header class="top" style="--i:0"><div>${title('Recetas')}<p class="sub">Cocina primero lo que está por vencer</p></div></header>
     ${hot.length ? `<section style="--i:1"><p class="eyebrow">Úsalo primero</p><div class="hscroll">${hot.map((x, i) => hangTag(x, i)).join('')}</div></section>` : ''}
     <div class="recipes">${ms.map((m, i) => i === 0 && m.hot ? `<button class="reco press" data-act="recipe" data-id="${m.r.id}" style="--i:2">${ornament}<span class="reco-ico">${foodIcon(m.r.icon)}</span>
-      <span class="eyebrow">Receta sugerida</span><b class="reco-t">${m.r.name}</b><span class="reco-m">Usa ${plural(m.hot, 'alimento', 'alimentos')} por vencer · <span class="num">${m.r.min}</span> min</span>
+      <span class="eyebrow">Receta sugerida</span><b class="reco-t">${m.r.name}</b><span class="reco-m">Usa ${plural(m.hot, 'alimento', 'alimentos')} por vencer · <span class="num">${m.r.min}</span> min · ${m.r.serves} porciones</span>
       <span class="tags">${m.used.slice(0, 4).map(x => `<span class="tag">${esc(x.it.name)}</span>`).join('')}</span></button>` : `<button class="feature glass press recipe" data-act="recipe" data-id="${m.r.id}" style="--i:${i + 2}">
       <span class="tile t-azul lg">${foodIcon(m.r.icon)}</span><span><b>${m.r.name}</b>
-      <span class="meta-line">${I.clock}<span class="num">${m.r.min} min</span>${m.used.length ? `· ${m.used.length === 1 ? 'usa 1 de tus alimentos' : `usa ${m.used.length} de tus alimentos`}` : '· te faltan ingredientes'}</span>
-      <span class="tags">${m.used.slice(0, 4).map(x => `<span class="tag ${x.state === 'porvencer' ? 'hot' : ''}">${esc(x.it.name)}</span>`).join('')}</span></span></button>`).join('')}</div>`;
+      <span class="meta-line">${I.clock}<span class="num">${m.r.min} min</span><span class="dot"></span>${I.users}<span class="num">${m.r.serves}</span><span class="dot"></span>${m.r.level}</span>
+      <span class="uses">${m.used.length ? (m.used.length === 1 ? 'Usa 1 de tus alimentos' : `Usa ${m.used.length} de tus alimentos`) : 'Te faltan ingredientes'}</span>
+      <span class="tags">${m.used.slice(0, 4).map(x => `<span class="tag ${x.state === 'porvencer' ? 'hot' : ''}">${esc(x.it.name)}</span>`).join('')}</span></span></button>`).join('')}</div>
+    ${searchCard(hot.length ? hot.map(x => x.it.name) : sorted().slice(0, 3).map(x => x.it.name), ms.length + 2)}`;
+}
+
+// Live search on Mexican recipe sites with what has to be used first.
+function searchCard(names, i = 0) {
+  if (!names.length) return '';
+  return `<a class="websearch glass press" href="${webSearch(names.slice(0, 3))}" target="_blank" rel="noopener" style="--i:${i}">
+    <span class="tile t-verde lg">${I.search}</span><span><b>Busca más recetas en internet</b>
+    <span class="hint">Con ${esc(names.slice(0, 3).join(', '))} · Cocina Fácil, Nestlé, Kiwilimón</span></span>${I.ext}</a>`;
 }
 
 function viewImpacto() {
@@ -468,12 +489,15 @@ function setCat(c) {
 function openRecipe(id) {
   const m = matchRecipes().find(m => m.r.id === id); if (!m) return;
   const sel = new Set(m.used.filter(x => x.state === 'porvencer').map(x => x.it.id));
-  const draw = () => `<div class="d-head"><span class="tile t-azul lg">${foodIcon(m.r.icon)}</span><div><h2>${m.r.name}</h2>
-      <span class="meta-line" style="margin:0">${I.clock}<span class="num">${m.r.min} min</span></span></div></div>
+  const r = m.r;
+  const draw = () => `<div class="r-hero">${ornament}<span class="reco-ico">${foodIcon(r.icon)}</span><span class="eyebrow">Receta</span><h2>${r.name}</h2>
+      <div class="r-meta"><span>${I.clock}<b class="num">${r.min}</b> min</span><span>${I.users}<b class="num">${r.serves}</b> ${r.serves === 1 ? 'porción' : 'porciones'}</span><span>${I.gauge}${r.level}</span></div></div>
     ${m.used.length ? `<h4>De tu cocina</h4>${m.used.map(x => `<button class="check ${sel.has(x.it.id) ? 'on' : ''}" data-act="rsel" data-id="${x.it.id}">
       <span class="box">${I.check}</span><span style="flex:1"><b>${esc(x.it.name)}</b><br><span class="hint">${leftText(x.left)}</span></span>${stateTag(x.state)}</button>`).join('')}` : ''}
-    <h4>Ingredientes</h4><ul class="ing">${m.r.ing.map(i => `<li>${i}</li>`).join('')}</ul>
-    <h4>Preparación</h4><ol class="steps">${m.r.steps.map(s => `<li><span>${s}</span></li>`).join('')}</ol>
+    <h4>Ingredientes</h4><ul class="ing2">${r.ing.map(([q, n]) => `<li><b class="num">${q}</b><span>${n}</span></li>`).join('')}</ul>
+    <h4>Preparación</h4><ol class="steps2">${r.steps.map((st, k) => `<li><span class="n num">${k + 1}</span><div><p>${st.t}</p>${st.min ? timerChip(r.id, k, st.min) : ''}</div></li>`).join('')}</ol>
+    ${r.tip ? `<div class="r-tip">${I.bulb}<p><b>Para no desperdiciar.</b> ${r.tip}</p></div>` : ''}
+    <a class="r-src" href="${r.src.url}" target="_blank" rel="noopener">Basada en la receta de <b>${r.src.name}</b>${I.ext}</a>
     ${m.used.length ? `<div class="actions"><button class="btn btn-green block" data-act="cooked" ${sel.size ? '' : 'disabled'}>${I.check} La cociné · marcar ${sel.size ? plural(sel.size, 'alimento', 'alimentos') : 'alimentos'} como consumidos</button></div>` : ''}`;
   openSheet(draw(), { recipe: id, sel, draw });
 }
@@ -500,8 +524,11 @@ function openProfile() {
     <h4>Preferencias</h4><div class="rows glass" style="padding:0 16px">
       ${sw(S.prefs.theme === 'dark', 'theme-toggle', 'Modo oscuro', 'Fondo azul noche para usar de noche')}
       ${sw(S.prefs.notif && 'Notification' in window && Notification.permission === 'granted', 'notif-toggle', 'Avisos', 'Una notificación al día con lo que está por vencer')}
+      ${sw(S.prefs.sound, 'sound-toggle', 'Sonidos', 'Un tono suave en avisos, lecturas de pinza y temporizadores')}
+      ${sw(S.prefs.vibe, 'vibe-toggle', 'Vibración', 'El teléfono vibra al acercar una pinza y con cada aviso')}
       ${sw(S.prefs.bigText, 'big-toggle', 'Texto grande', 'Aumenta el tamaño de toda la app')}</div>
-    ${S.prefs.notif ? `<button class="link" style="margin-top:12px" data-act="notif-test">${I.bell} Enviar un aviso de prueba</button>` : ''}
+    <div class="test-row"><button class="link" data-act="fb-test">${I.volume} Probar sonido y vibración</button>
+    ${S.prefs.notif ? `<button class="link" data-act="notif-test">${I.bell} Enviar un aviso de prueba</button>` : ''}</div>
     <h4>Datos</h4><div class="actions" style="margin-top:6px">
       <button class="btn btn-ghost" data-act="demo">Cargar cocina de ejemplo</button>
       <button class="btn btn-danger" data-act="reset">Borrar todo y empezar de cero</button></div>
@@ -567,7 +594,7 @@ function detected(id, serial) {
     p = { id, name: `Pinza ${S.pinzas.length + 1}`, color: colors[S.pinzas.length % 4], serial: serial || null };
     S.pinzas.push(p); save(); isNew = true;
   }
-  haptic('success');
+  haptic('nfc');
   const s = $('#scan-root .scan');
   if (s) {
     s.classList.add('ok'); $('#scan-x').innerHTML = '';
@@ -596,6 +623,31 @@ async function writeTag(id) {
   }
 }
 
+// ---------- step timers (keep running while the sheet is closed) ----------
+const timers = {};
+const mmss = s => `${Math.floor(s / 60)}:${pad(s % 60)}`;
+function timerChip(rid, k, min) {
+  const t = timers[`${rid}:${k}`], left = t ? Math.max(0, Math.round((t.end - Date.now()) / 1000)) : min * 60;
+  return `<button class="timer-chip ${t ? (left ? 'run' : 'done') : ''}" data-act="timer" data-key="${rid}:${k}" data-min="${min}">${I.timer}<span class="num">${t ? (left ? mmss(left) : '¡Listo!') : `${min} min`}</span></button>`;
+}
+function startTimer(key, min, el) {
+  if (timers[key]) { clearInterval(timers[key].iv); delete timers[key]; if (el) el.outerHTML = timerChip(...key.split(':'), min); return; } // tap again to cancel
+  const t = timers[key] = { end: Date.now() + min * 6e4 };
+  const paint = () => {
+    const chip = document.querySelector(`.timer-chip[data-key="${key}"]`), left = Math.max(0, Math.round((t.end - Date.now()) / 1000));
+    if (chip) { chip.classList.toggle('run', left > 0); chip.classList.toggle('done', !left); $('span', chip).textContent = left ? mmss(left) : '¡Listo!'; }
+    if (!left) {
+      clearInterval(t.iv); feedback('timer');
+      const name = RECIPES.find(x => x.id === key.split(':')[0])?.name || 'tu receta';
+      toast(`Tiempo cumplido · ${name}, paso ${+key.split(':')[1] + 1}`, 'bell');
+      if (document.hidden && S.prefs.notif && 'Notification' in window && Notification.permission === 'granted')
+        navigator.serviceWorker?.getRegistration().then(reg => reg?.showNotification('FRESHTAG · Tiempo cumplido', { body: `${name}: paso ${+key.split(':')[1] + 1}.`, icon: 'img/icon-192.png', vibrate: [300, 150, 300], tag: `timer-${key}` }));
+      setTimeout(() => { delete timers[key]; }, 4000);
+    }
+  };
+  t.iv = setInterval(paint, 1000); paint(); feedback('success');
+}
+
 // ---------- notifications ----------
 async function notify(force = false) {
   if (!S.prefs.notif || !('Notification' in window) || Notification.permission !== 'granted') return;
@@ -604,7 +656,8 @@ async function notify(force = false) {
   if (!due.length && !force) return;
   const body = due.length ? (due.length === 1 ? `${due[0].it.name}: ${leftText(due[0].left).toLowerCase()}.` : `${due.length} alimentos por vencer: ${due.slice(0, 3).map(x => x.it.name).join(', ')}.`)
     : 'Todo está fresco en tu cocina.';
-  const opts = { body, icon: 'img/icon-192.png', badge: 'img/icon-192.png', tag: 'freshtag-daily' };
+  const opts = { body, icon: 'img/icon-192.png', badge: 'img/icon-192.png', tag: 'freshtag-daily', renotify: true, silent: false, vibrate: NOTIF_VIBRATE };
+  if (!document.hidden) { feedback('notif'); toast(body, 'bell'); }
   try { const reg = await navigator.serviceWorker?.getRegistration(); reg ? await reg.showNotification('FRESHTAG · Úsalo primero', opts) : new Notification('FRESHTAG · Úsalo primero', opts); }
   catch { toast('Este navegador no pudo mostrar el aviso', 'alert'); return; }
   S.notified = iso(today()); save();
@@ -620,10 +673,7 @@ async function enableNotif() {
 
 // ---------- feedback ----------
 // Inside the Expo Go shell the page talks to expo-haptics; in a browser it falls back to vibration (Android).
-function haptic(kind = 'light') {
-  if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'haptic', kind }));
-  else navigator.vibrate?.(kind === 'success' ? [12, 50, 22] : kind === 'warning' ? [24, 40, 24] : 8);
-}
+function haptic(kind = 'light') { feedback(kind === 'light' ? 'tap' : kind); }
 function toast(msg, icon = 'check') {
   const root = $('#toast-root'); root.innerHTML = `<div class="toast" role="status">${I[icon]}<span>${esc(msg)}</span></div>`;
   const t = $('.toast', root); requestAnimationFrame(() => requestAnimationFrame(() => t.classList.add('show')));
@@ -696,6 +746,10 @@ const A = {
   'notif-on': async () => { if (await enableNotif()) openAlerts(); },
   'notif-toggle': async (d, el) => { goo(el); if (S.prefs.notif) { S.prefs.notif = false; save(); } else await enableNotif(); setTimeout(openProfile, 380); },
   'notif-test': () => notify(true),
+  'sound-toggle': (d, el) => { goo(el); S.prefs.sound = !S.prefs.sound; save(); if (S.prefs.sound) feedback('success'); },
+  'vibe-toggle': (d, el) => { goo(el); S.prefs.vibe = !S.prefs.vibe; save(); if (S.prefs.vibe) feedback('nfc'); },
+  'fb-test': () => feedback('notif'),
+  timer: (d, el) => startTimer(d.key, +d.min, el),
   'big-toggle': (d, el) => { goo(el); setTimeout(() => { S.prefs.bigText = !S.prefs.bigText; save(); render(); openProfile(); }, 380); },
   // animated theme toggle: circular reveal from the tap point
   'theme-toggle': (d, el, e) => {

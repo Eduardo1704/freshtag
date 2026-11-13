@@ -57,7 +57,7 @@ svg.i { width: 1.35em; height: 1.35em; fill: none; stroke: currentColor; stroke-
 .eyebrow { display: block; margin: 0 0 6px; font-size: .68rem; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--eyebrow); }
 
 /* ---------- frame ---------- */
-#phone { position: relative; height: 100dvh; overflow: hidden; background: var(--bg); isolation: isolate; }
+#phone { position: relative; height: 100dvh; overflow: hidden; overflow: clip; background: var(--bg); isolation: isolate; }
 .desk { display: none; }
 @media (min-width: 900px) {
   body { display: flex; align-items: center; justify-content: center; gap: 72px; padding: 24px; background: radial-gradient(900px 600px at 15% 10%, var(--bg-2), transparent 70%), var(--bg); }
@@ -104,7 +104,7 @@ svg.i { width: 1.35em; height: 1.35em; fill: none; stroke: currentColor; stroke-
 
 /* ---------- view, collapsing header, tab bar ---------- */
 #app { height: 100%; position: relative; }
-.view { height: 100%; overflow-y: auto; overscroll-behavior: contain; padding: calc(18px + var(--safe-t)) 18px calc(124px + var(--safe-b)); scrollbar-width: none; }
+.view { height: 100%; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; padding: calc(18px + var(--safe-t)) 18px calc(124px + var(--safe-b)); scrollbar-width: none; }
 .view::-webkit-scrollbar { display: none; }
 .view.anim > * { animation: rise .6s var(--ease) both; animation-delay: calc(var(--i, 0) * 60ms); }
 .minibar { position: absolute; left: 0; right: 0; top: 0; z-index: 9; padding: calc(12px + var(--safe-t)) 18px 12px; display: flex; align-items: center; justify-content: center;
@@ -548,3 +548,51 @@ h4 { margin: 22px 0 6px; font-family: var(--display); font-weight: 700; font-siz
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+/* ---------- v4: recipes, timers, feedback prefs ---------- */
+.meta-line .dot { width: 3px; height: 3px; border-radius: 50%; background: currentColor; opacity: .5; }
+.feature.recipe { grid-template-columns: 60px 1fr; align-items: start; }
+.feature.recipe .uses { display: block; font-size: .78rem; font-weight: 600; color: var(--accent); margin: -2px 0 8px; }
+.websearch { display: grid; grid-template-columns: 60px 1fr 20px; gap: 14px; align-items: center; margin-top: 12px; padding: 14px; color: var(--ink); text-decoration: none; border-style: dashed; border-color: color-mix(in srgb, var(--verde) 45%, transparent); }
+.websearch b { display: block; color: var(--head); margin-bottom: 2px; }
+.websearch > svg.i { width: 18px; height: 18px; color: var(--accent); }
+.view.anim .websearch { animation: rise .6s var(--ease) both; animation-delay: calc(var(--i, 0) * 60ms); }
+
+/* recipe sheet */
+.r-hero { position: relative; overflow: hidden; margin: 6px 0 4px; padding: 20px 20px 18px; border-radius: var(--r-lg); background: var(--azul); color: var(--crema); }
+.r-hero .eyebrow { color: rgba(249, 246, 239, .72); margin: 0; }
+.sheet .r-hero h2 { color: var(--crema); max-width: 72%; margin: 4px 0 14px; font-size: 1.6rem; line-height: 1.05; }
+.r-hero .reco-ico { top: 20px; bottom: auto; }
+.r-meta { display: flex; flex-wrap: wrap; gap: 8px; position: relative; z-index: 1; }
+.r-meta span { display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px; border-radius: 999px; font-size: .8rem; background: rgba(249, 246, 239, .14); border: 1px solid rgba(249, 246, 239, .18); }
+.r-meta svg.i { width: 15px; height: 15px; }
+.r-meta b { font-weight: 700; }
+.ing2 { list-style: none; margin: 0; padding: 0; display: grid; }
+.ing2 li { display: grid; grid-template-columns: 74px 1fr; gap: 12px; padding: 10px 2px; border-bottom: 1px solid var(--stroke); font-size: .92rem; line-height: 1.35; }
+.ing2 li:last-child { border-bottom: 0; }
+.ing2 b { color: var(--accent); font-weight: 700; text-align: right; }
+.steps2 { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 4px; }
+.steps2 li { display: grid; grid-template-columns: 30px 1fr; gap: 12px; padding: 8px 0; position: relative; }
+.steps2 li:not(:last-child)::before { content: ''; position: absolute; left: 14px; top: 40px; bottom: -6px; width: 2px; border-radius: 2px; background: var(--track); }
+.steps2 .n { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: .85rem; font-weight: 700; background: var(--azul); color: var(--crema); }
+.steps2 p { margin: 4px 0 0; font-size: .93rem; line-height: 1.5; color: var(--ink); }
+.timer-chip { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 6px 12px 6px 9px; border-radius: 999px; font: inherit; font-size: .8rem; font-weight: 700; cursor: pointer;
+  color: var(--azul); background: color-mix(in srgb, var(--azul) 9%, transparent); border: 1px solid color-mix(in srgb, var(--azul) 22%, transparent); transition: background .25s, color .25s, transform .2s var(--spring); }
+.timer-chip svg.i { width: 15px; height: 15px; }
+.timer-chip:active { transform: scale(.95); }
+.timer-chip.run { color: var(--crema); background: var(--azul); border-color: var(--azul); }
+.timer-chip.run svg.i { animation: chipTick 1s steps(2) infinite; }
+.timer-chip.done { color: #fff; background: var(--verde); border-color: var(--verde); animation: chipPop .5s var(--spring); }
+:root[data-theme="dark"] .timer-chip { color: var(--crema); background: rgba(249, 246, 239, .1); border-color: rgba(249, 246, 239, .2); }
+:root[data-theme="dark"] .timer-chip.run { background: var(--primary); }
+@keyframes chipTick { 50% { transform: rotate(12deg); } }
+@keyframes chipPop { 0% { transform: scale(.9); } 60% { transform: scale(1.08); } }
+.r-tip { display: grid; grid-template-columns: 22px 1fr; gap: 10px; margin-top: 18px; padding: 14px 16px; border-radius: var(--r); background: color-mix(in srgb, var(--verde) 11%, transparent); border: 1px dashed color-mix(in srgb, var(--verde) 50%, transparent); }
+.r-tip svg.i { width: 20px; height: 20px; color: var(--accent); margin-top: 1px; }
+.r-tip p { margin: 0; font-size: .87rem; line-height: 1.5; color: var(--ink); }
+.r-tip b { color: var(--accent); }
+.r-src { display: flex; align-items: center; gap: 6px; margin: 14px 2px 4px; font-size: .8rem; color: var(--muted); text-decoration: none; }
+.r-src b { color: var(--head); }
+.r-src svg.i { width: 14px; height: 14px; }
+.test-row { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 12px; }
+.test-row .link { gap: 6px; }
