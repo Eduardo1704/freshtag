@@ -1,0 +1,132 @@
+/* FRESHTAG app · v5 layer — Liquid Glass (iOS 26 reference), typography choices, accent colors, motion prefs.
+   Everything is driven by data-* attributes on <html> that app.js sets from the user's Ajustes:
+   data-font = apple | marca | futuro · data-accent = azul | verde | coral · data-glass = liquid | frost | solid · data-motion = full | reduced.
+   Liquid glass recipe adapted from the open-source CSS/SVG demos (archisvaze/liquid-glass, nikdelvin/liquid-glass):
+   a thin tint, strong saturation, two specular rims (light top-left, faint bottom-right) and, on Chromium, real edge refraction. */
+
+@font-face { font-family: 'Geist'; src: url(fonts/geist.woff2) format('woff2'); font-weight: 100 900; font-display: swap; }
+@font-face { font-family: 'Space Grotesk'; src: url(fonts/space-grotesk.woff2) format('woff2'); font-weight: 300 700; font-display: swap; }
+
+:root {
+  /* spring sampled from a damped oscillator (stiffness 170, damping 18): the SwiftUI .spring feel */
+  --ios-spring: linear(0, .009, .035 2.1%, .141 4.4%, .723 12.9%, .938 16.7%, 1.017 19.4%, 1.067, 1.099 24.3%, 1.108 26%, 1.104, 1.084 31.1%, 1.028 37.1%, 1.001 40.4%, .987 43.4%, .985 46.2%, .998 54.7%, 1.002 62%, 1);
+  --lg-fill: rgba(255, 255, 255, .4); --lg-fill-2: rgba(255, 255, 255, .62); --lg-glow: rgba(255, 255, 255, .6);
+  --lg-rim: rgba(255, 255, 255, .95); --lg-rim-2: rgba(255, 255, 255, .4); --lg-edge: rgba(42, 80, 130, .08);
+  --card-solid: #FFFFFF;
+}
+:root[data-theme="dark"] {
+  --lg-fill: rgba(140, 170, 220, .09); --lg-fill-2: rgba(22, 44, 78, .66); --lg-glow: rgba(255, 255, 255, .09);
+  --lg-rim: rgba(255, 255, 255, .34); --lg-rim-2: rgba(255, 255, 255, .08); --lg-edge: rgba(255, 255, 255, .06);
+  --card-solid: #12284A;
+}
+
+/* ---------- typography ---------- */
+/* Apple: SF Pro on iPhone/Mac (the system font, so no file to ship); Geist everywhere else. */
+:root[data-font="apple"] { --display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Geist', system-ui, sans-serif; --texto: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Geist', system-ui, sans-serif; }
+:root[data-font="futuro"] { --display: 'Space Grotesk', 'Geist', sans-serif; --texto: 'Geist', system-ui, sans-serif; }
+:root[data-font="apple"] :is(.title, .onb h1, .scan h2) { font-weight: 800; letter-spacing: -.025em; }
+:root[data-font="apple"] :is(.sec-head h3, .summary h2, .sheet h2, .reco-t, h4, .impact-top h2) { letter-spacing: -.015em; }
+:root[data-font="futuro"] :is(.title, .onb h1, .scan h2) { letter-spacing: -.035em; }
+:root[data-font="futuro"] .eyebrow { letter-spacing: .22em; }
+
+/* ---------- accent: the one action color (manual p.17 keeps it blue by default) ---------- */
+:root[data-accent="verde"] { --azul: #2F7A62; --primary: #2F7A62; }
+:root[data-accent="coral"] { --azul: #B94A3B; --primary: #B94A3B; }
+:root[data-theme="dark"] { --primary: color-mix(in srgb, var(--azul), #fff 14%); }
+:root[data-accent="verde"] .fact:last-child { background: #2A5082; } /* keep the two data cards apart */
+
+/* ---------- Liquid glass (default) ---------- */
+:root[data-glass="liquid"] .glass:not(.fact) {
+  background: linear-gradient(155deg, var(--lg-glow), transparent 42%), var(--lg-fill); border-color: transparent;
+  backdrop-filter: blur(18px) saturate(1.9) brightness(1.03); -webkit-backdrop-filter: blur(18px) saturate(1.9) brightness(1.03);
+  box-shadow: inset 1.2px 1.2px 0 var(--lg-rim), inset -1px -1px 0 var(--lg-rim-2), 0 0 0 .5px var(--lg-edge), var(--shadow);
+}
+:root[data-glass="liquid"] .tabbar.glass { background: linear-gradient(170deg, var(--lg-glow), transparent 55%), var(--lg-fill-2); }
+:root[data-glass="liquid"] .ind {
+  background: linear-gradient(160deg, rgba(255, 255, 255, .7), rgba(255, 255, 255, .2)); box-shadow: inset 1px 1px 0 var(--lg-rim), inset -1px -1px 0 var(--lg-rim-2), 0 4px 14px -6px rgba(11, 26, 47, .3);
+}
+:root[data-glass="liquid"][data-theme="dark"] .ind { background: linear-gradient(160deg, rgba(255, 255, 255, .2), rgba(255, 255, 255, .05)); }
+:root[data-glass="liquid"] :is(.chip, .btn-ghost, .input, .stepper button, .cat, .check):not(.on) {
+  background: var(--lg-fill); backdrop-filter: blur(14px) saturate(1.7); -webkit-backdrop-filter: blur(14px) saturate(1.7);
+  border-color: transparent; box-shadow: inset 1px 1px 0 var(--lg-rim), inset -1px -1px 0 var(--lg-rim-2), 0 0 0 .5px var(--lg-edge);
+}
+:root[data-glass="liquid"] .input:focus { box-shadow: inset 1px 1px 0 var(--lg-rim), 0 0 0 2px var(--azul), 0 0 0 6px color-mix(in srgb, var(--azul) 16%, transparent); }
+:root[data-glass="liquid"] .sheet { background: linear-gradient(180deg, var(--lg-glow), transparent 120px), var(--sheet); box-shadow: inset 0 1.2px 0 var(--lg-rim), 0 -20px 50px rgba(11, 26, 47, .25); border-top: 0; }
+:root[data-glass="liquid"] :is(.sheet .close, .scan .close) { background: var(--lg-fill-2); backdrop-filter: blur(12px) saturate(1.8); -webkit-backdrop-filter: blur(12px) saturate(1.8); box-shadow: inset 1px 1px 0 var(--lg-rim), inset -1px -1px 0 var(--lg-rim-2); }
+:root[data-glass="liquid"] .minibar { background: linear-gradient(180deg, color-mix(in srgb, var(--bg) 78%, transparent), color-mix(in srgb, var(--bg) 40%, transparent)); border-bottom: 0; box-shadow: inset 0 -.5px 0 var(--lg-edge); }
+:root[data-glass="liquid"] .toast { background: color-mix(in srgb, var(--noche) 78%, transparent); backdrop-filter: blur(20px) saturate(1.8); -webkit-backdrop-filter: blur(20px) saturate(1.8); box-shadow: inset 1px 1px 0 rgba(255, 255, 255, .22), 0 16px 36px -10px rgba(11, 26, 47, .5); }
+/* specular sheen that glides across glass when it is pressed */
+:root[data-glass="liquid"] .glass.press::before { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 3;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, .45) 50%, transparent 65%) no-repeat; background-size: 250% 100%; background-position: 130% 0; opacity: 0; }
+:root[data-glass="liquid"] .glass.press:active::before { animation: sheen .7s var(--ease); }
+@keyframes sheen { from { background-position: 130% 0; opacity: 1; } to { background-position: -30% 0; opacity: 0; } }
+
+/* ---------- Esmerilado = the v4 frosted look (app.css as is) ---------- */
+
+/* ---------- Sólido: no transparency (iOS "Reducir transparencia"; also the fastest on old phones) ---------- */
+:root[data-glass="solid"] :is(.glass:not(.fact), .chip:not(.on), .btn-ghost, .input, .cat:not(.on), .check, .stepper button) { background: var(--card-solid); backdrop-filter: none; -webkit-backdrop-filter: none; }
+:root[data-glass="solid"] :is(.sheet, .minibar, .toast) { backdrop-filter: none; -webkit-backdrop-filter: none; }
+:root[data-glass="solid"] .sheet { background: var(--bg); }
+:root[data-glass="solid"] .minibar { background: var(--bg); }
+:root[data-glass="solid"] .aurora { display: none; }
+
+/* ---------- card stack: the view steps back while a sheet is up (iOS page sheet) ---------- */
+#app { transform-origin: 50% 0; transition: transform .6s var(--ios-spring), border-radius .6s var(--ease), filter .6s var(--ease); }
+#phone { transition: background .5s var(--ease); }
+#phone.stack { background: #050D18; }
+#phone.stack .aurora { opacity: 0; transition: opacity .4s; }
+#phone.stack #app { transform: translateY(calc(12px + var(--safe-t))) scale(.92); border-radius: 30px; overflow: hidden; background: var(--bg); filter: brightness(.94); }
+
+/* ---------- tab change: the page slides in the direction of the tab (view transitions) ---------- */
+#view { view-transition-name: page; }
+.theme-x #view { view-transition-name: none; }
+::view-transition-old(page) { animation: pageOut .28s var(--ease) both; }
+::view-transition-new(page) { animation: pageIn .55s var(--ios-spring) both; }
+.vt-back::view-transition-old(page) { animation-name: pageOutBack; }
+.vt-back::view-transition-new(page) { animation-name: pageInBack; }
+@keyframes pageOut { to { opacity: 0; transform: translateX(-6%) scale(.98); filter: blur(4px); } }
+@keyframes pageIn { from { opacity: 0; transform: translateX(8%); } }
+@keyframes pageOutBack { to { opacity: 0; transform: translateX(6%) scale(.98); filter: blur(4px); } }
+@keyframes pageInBack { from { opacity: 0; transform: translateX(-8%); } }
+
+/* ---------- spring-ier interactions ---------- */
+.press:active { transform: scale(.965); }
+.sheet { transition: transform .6s var(--ios-spring); }
+.icon-btn svg.i { transition: transform .5s var(--ios-spring); }
+.icon-btn:active svg.i { transform: rotate(-30deg); }
+
+/* ---------- motion off (Ajustes → Animaciones) mirrors prefers-reduced-motion ---------- */
+:root[data-motion="reduced"] *, :root[data-motion="reduced"] *::before, :root[data-motion="reduced"] *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+:root[data-motion="reduced"] #view { view-transition-name: none; }
+
+/* ---------- v5 bug fixes ---------- */
+.reco .tags { padding-right: 56px; } /* the round icon sat on top of the third tag */
+.r-hero .reco-ico { display: none; }  /* collided with the sheet's close button */
+.sheet .r-hero h2 { max-width: 78%; }
+
+/* ---------- Ajustes ---------- */
+.set-intro { margin: 0 0 4px; }
+.swatches { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.swatch { display: grid; justify-items: center; gap: 8px; padding: 12px 6px 10px; border-radius: 18px; font-size: .8rem; font-weight: 600; color: var(--muted); background: var(--track); border: 1.5px solid transparent; transition: border-color .25s, color .25s, transform .45s var(--ios-spring); }
+.swatch i { width: 34px; height: 34px; border-radius: 50%; box-shadow: inset 1px 1.5px 0 rgba(255, 255, 255, .45), 0 6px 14px -6px rgba(11, 26, 47, .5); transition: transform .5s var(--ios-spring); }
+.swatch.on { color: var(--head); border-color: currentColor; }
+.swatch.on i { transform: scale(1.12); }
+.sw-azul i { background: #2A5082; } .sw-verde i { background: #2F7A62; } .sw-coral i { background: #B94A3B; }
+.fonts { display: grid; gap: 8px; }
+.font-opt { display: grid; grid-template-columns: 54px 1fr 24px; gap: 12px; align-items: center; width: 100%; padding: 12px 14px; text-align: left; color: var(--ink); border-radius: 20px; }
+.font-opt .aa { font-size: 1.9rem; font-weight: 700; line-height: 1; color: var(--head); text-align: center; }
+.font-opt b { display: block; color: var(--head); font-size: .98rem; }
+.font-opt small { color: var(--muted); font-size: .78rem; }
+.font-opt[data-v="apple"] :is(.aa, b) { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Geist', sans-serif; letter-spacing: -.02em; }
+.font-opt[data-v="marca"] :is(.aa, b) { font-family: 'Vice City Sans', 'DM Sans', sans-serif; }
+.font-opt[data-v="futuro"] :is(.aa, b) { font-family: 'Space Grotesk', sans-serif; letter-spacing: -.03em; }
+.radio { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--faint); display: grid; place-items: center; transition: border-color .25s; }
+.radio::after { content: ''; width: 10px; height: 10px; border-radius: 50%; background: var(--azul); transform: scale(0); transition: transform .45s var(--ios-spring); }
+.font-opt.on .radio { border-color: var(--azul); }
+.font-opt.on .radio::after { transform: scale(1); }
+:root[data-theme="dark"] .font-opt.on .radio { border-color: var(--crema); }
+:root[data-theme="dark"] .font-opt.on .radio::after { background: var(--crema); }
+.font-opt.on { box-shadow: inset 0 0 0 1.5px var(--azul), var(--shadow) !important; }
+:root[data-theme="dark"] .font-opt.on { box-shadow: inset 0 0 0 1.5px var(--crema), var(--shadow) !important; }
+.set-note { margin: 8px 2px 0; }
+.set-reset { margin-top: 18px; display: flex; justify-content: center; }

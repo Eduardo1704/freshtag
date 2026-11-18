@@ -112,18 +112,27 @@ svg.i { width: 1.35em; height: 1.35em; fill: none; stroke: currentColor; stroke-
   border-bottom: 1px solid var(--stroke); font-family: var(--display); font-weight: 700; font-size: 1rem; color: var(--head); transform: translateY(-110%); transition: transform .45s var(--ease); pointer-events: none; }
 #app.scrolled .minibar { transform: none; }
 
-.tabbar { position: absolute; left: 12px; right: 12px; bottom: calc(12px + var(--safe-b)); z-index: 10; display: grid; grid-template-columns: 1fr 1fr 78px 1fr 1fr; align-items: center; height: 72px; padding: 0 6px; border-radius: 28px; }
+/* v5 dock (iOS 26): a floating glass capsule with the four sections + the NFC action as its own glass disc */
+.dock { position: absolute; left: 14px; right: 14px; bottom: calc(14px + var(--safe-b)); z-index: 10; display: flex; align-items: center; gap: 10px; pointer-events: none; }
+.dock > * { pointer-events: auto; }
+.tabbar { position: relative; flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); align-items: center; height: 66px; padding: 0 5px; border-radius: 33px; transition: height .55s var(--ios-spring); }
 .tabbar.glass { overflow: visible; background: color-mix(in srgb, var(--glass-3) 72%, transparent); }
-.tab { position: relative; overflow: hidden; z-index: 1; display: grid; justify-items: center; gap: 3px; padding: 8px 0; border-radius: 20px; color: var(--muted); font-size: .66rem; font-weight: 600; transition: color .3s; }
-.tab svg.i { transition: transform .5s var(--spring); }
+.tab { position: relative; overflow: hidden; z-index: 1; display: grid; justify-items: center; align-content: center; gap: 2px; height: 100%; border-radius: 28px; color: var(--muted); font-size: .64rem; font-weight: 600; transition: color .3s; }
+.tab svg.i { width: 23px; height: 23px; transition: transform .5s var(--spring); }
+.tab .lbl { max-height: 1.4em; transition: opacity .3s, max-height .45s var(--ease); }
 .tab.on { color: var(--head); }
-.tab.on svg.i { transform: translateY(-1px) scale(1.12); }
-.tab .pill { display: grid; place-items: center; width: 48px; height: 30px; }
-.ind { position: absolute; top: 8px; left: 0; height: 56px; width: 64px; border-radius: 20px; background: var(--track); pointer-events: none; }
+.tab.on svg.i { transform: scale(1.08); }
+.tab .pill { display: grid; place-items: center; width: 44px; height: 28px; }
+.ind { position: absolute; top: 5px; bottom: 5px; left: 0; width: 64px; border-radius: 28px; background: var(--track); pointer-events: none; }
+/* scrolling down shrinks the dock (iOS 26 tab bar minimize); scrolling up brings it back */
+.mini .tabbar { height: 52px; }
+.mini .tab .lbl { opacity: 0; max-height: 0; }
+.mini .fab { width: 52px; height: 52px; }
 /* blue = the one action (manual p.17); the coral beam runs around it */
-.fab { position: relative; justify-self: center; width: 64px; height: 64px; margin-top: -34px; border-radius: 50%; display: grid; place-items: center; color: var(--crema); z-index: 2;
-  background: radial-gradient(circle at 32% 25%, #3E6CA8, var(--azul) 60%, #213F68); box-shadow: 0 14px 26px -10px rgba(11, 26, 47, .55), 0 0 0 6px color-mix(in srgb, var(--bg) 85%, transparent); transition: transform .45s var(--spring); }
-.fab svg.i { width: 30px; height: 30px; }
+.fab { position: relative; flex: none; width: 66px; height: 66px; border-radius: 50%; display: grid; place-items: center; color: var(--crema); z-index: 2;
+  background: radial-gradient(circle at 32% 25%, color-mix(in srgb, var(--azul), #fff 22%), var(--azul) 60%, color-mix(in srgb, var(--azul), #000 22%));
+  box-shadow: inset 1px 1.5px 0 rgba(255, 255, 255, .45), inset -1px -1px 0 rgba(255, 255, 255, .12), 0 14px 26px -10px rgba(11, 26, 47, .55); transition: transform .45s var(--spring), width .55s var(--ios-spring), height .55s var(--ios-spring); }
+.fab svg.i { width: 28px; height: 28px; }
 .fab:active { transform: scale(.9); }
 .fab::before { content: ''; position: absolute; inset: -5px; border-radius: 50%; padding: 2px; background: conic-gradient(from var(--a), transparent 0 58%, var(--coral) 76%, transparent 92%);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; animation: spin 3.2s linear infinite; }

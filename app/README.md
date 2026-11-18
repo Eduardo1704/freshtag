@@ -11,6 +11,8 @@ App web instalable (PWA) para simular y usar el sistema FRESHTAG: pinzas con NFC
 - **Semáforo**: Fresco (más de 2 días) · Por vencer (0–2 días) · Vencido.
 - **Despensa** con búsqueda y filtros por estado y por lugar (Refri, Congelador, Alacena).
 - **Recetas** ordenadas por lo que está por vencer; «La cociné» marca esos alimentos como consumidos. Cada receta trae cantidades, pasos con temporizador, un consejo y el enlace a la receta original (Cocina Fácil, Recetas Nestlé, Cocina Delirante). «Buscar más recetas» abre una búsqueda en sitios de recetas mexicanos con tus alimentos por vencer.
+- **Ajustes** (engrane en cada pantalla): tema claro / oscuro / automático, color principal (azul, verde, coral), tipografía (Apple, FRESHTAG o Futurista), vidrio (líquido, esmerilado o sólido), animaciones, sonidos, vibración, avisos y texto grande.
+- **Diseño v5 estilo iOS 26**: dock de vidrio líquido que se encoge al hacer scroll, hojas que empujan la pantalla hacia atrás, transiciones con resorte entre secciones. En Chrome/Android el vidrio también refracta lo que pasa detrás; en iPhone usa brillos y desenfoque.
 - **Sonidos y vibración** en avisos, lecturas de pinza y temporizadores (Perfil → Sonidos / Vibración). En iPhone la vibración solo funciona dentro de Expo Go (expo-haptics); Safari no la permite.
 - **Impacto**: % aprovechado, gráfica por semana, lo que más se desperdicia e historial.
 - **Avisos** (notificación diaria) y **Texto grande** en el perfil.
@@ -79,5 +81,7 @@ En iPhone la lectura en segundo plano funciona desde el iPhone XS; no hace falta
 | `js/data.js` | Categorías, kit de pinzas y datos de ejemplo |
 | `js/recipes.js` | 12 recetas detalladas con fuente + búsqueda web |
 | `js/feedback.js` | Sonidos (Web Audio) y patrones de vibración |
+| `css/glass.css` | v5: Liquid Glass, tipografías, colores, modo sólido, animaciones |
+| `css/fonts/` | Geist y Space Grotesk (OFL, autoalojadas para funcionar sin conexión) |
 | `sw.js` | Uso sin conexión y clic en notificaciones |
 | `manifest.webmanifest` | Instalación en la pantalla de inicio |

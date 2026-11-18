@@ -49,16 +49,20 @@ const P = {
   gauge: '<path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/>',
   timer: '<path d="M10 2h4M12 14l3-3"/><circle cx="12" cy="14" r="8"/>',
   bulb: '<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5M9 18h6M10 22h4"/>',
+  gear: '<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
   link: '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
 };
 const I = new Proxy({}, { get: (_, k) => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${P[k] || ''}</svg>` });
 
 // ---------- state ----------
-const fresh = () => ({ user: null, pinzas: KIT.map(p => ({ ...p })), items: [], log: [], prefs: { bigText: false, notif: false, theme: 'light', v3: true, sound: true, vibe: true }, notified: '' });
+// v5 look prefs (Ajustes): theme light|dark|auto, font apple|marca|futuro, accent azul|verde|coral, glass liquid|frost|solid
+const LOOK = { theme: 'light', font: 'apple', accent: 'azul', glass: 'liquid', motion: true, bigText: false };
+const fresh = () => ({ user: null, pinzas: KIT.map(p => ({ ...p })), items: [], log: [], prefs: { ...LOOK, notif: false, v3: true, v5: true, sound: true, vibe: true }, notified: '' });
 let S;
 try { S = JSON.parse(localStorage.getItem(KEY)) || fresh(); } catch { S = fresh(); }
 if (!S.prefs.v3) { S.prefs.theme = 'light'; S.prefs.v3 = true; } // v3: the brand manual asks for a cream background
 if (S.prefs.sound === undefined) { S.prefs.sound = true; S.prefs.vibe = true; } // v4 adds sound + vibration
+if (!S.prefs.v5) S.prefs = { ...LOOK, ...S.prefs, v5: true }; // v5 adds the Ajustes look prefs, keeping the user's theme and text size
 initFeedback(() => S.prefs);
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch { /* private mode: state stays in memory */ } };
 
@@ -141,7 +145,10 @@ function settleRolls(root, fresh) {
 // staggered blur-in title (ReactiCX staggered-text)
 const split = t => `<span aria-hidden="true">${[...t].map((c, i) => `<span class="ch" style="--c:${i}">${esc(c)}</span>`).join('')}</span>`;
 const title = t => `<h1 class="title" aria-label="${esc(t)}">${split(t)}</h1>`;
-const logoSrc = () => S.prefs.theme === 'light' ? 'img/logo.svg' : 'img/logo-negativo.svg';
+const darkMQ = matchMedia('(prefers-color-scheme: dark)');
+const themeNow = () => S.prefs.theme === 'auto' ? (darkMQ.matches ? 'dark' : 'light') : S.prefs.theme;
+const motionOn = () => S.prefs.motion !== false && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+const logoSrc = () => themeNow() === 'light' ? 'img/logo.svg' : 'img/logo-negativo.svg';
 const pz = p => p ? `<span class="pz pz-${p.color}"></span>` : '';
 const pinzaImg = p => ['crema', 'verde', 'coral'].includes(p.color)
   ? `<img src="img/pinza-${p.color}.jpg" alt="">` : `<div class="ph"><img src="img/isotipo.svg" alt=""></div>`;
@@ -173,6 +180,7 @@ const hangTag = (x, i = 0) => `<button class="hang glass press s-${x.state}" dat
   <span class="hole" aria-hidden="true"></span>${catTile(x.it.cat, 'sm')}<b>${esc(x.it.name)}</b>
   <span class="days s-${x.state}">${daysBig(x.left)}</span>${meter(x.pct, x.state)}</button>`;
 const ornament = '<span class="orn" aria-hidden="true"><i></i><i></i></span>';
+const gear = () => `<button class="icon-btn glass press" data-act="settings" aria-label="Ajustes">${I.gear}</button>`;
 
 // ---------- views ----------
 function viewInicio() {
@@ -183,7 +191,7 @@ function viewInicio() {
   const saved = month.filter(l => l.action === 'consumido').length;
   const head = `<header class="top" style="--i:0">
       <div><p class="hello"><img class="head-iso" src="img/isotipo-reducido.svg" alt="">Hola, ${esc(name)}</p>${title('Mi cocina')}</div>
-      <div class="top-actions">
+      <div class="top-actions">${gear()}
         <button class="icon-btn glass press" data-act="alerts" aria-label="Avisos">${I.bell}${c.porvencer + c.vencido ? `<span class="badge num">${c.porvencer + c.vencido}</span>` : ''}</button>
         <button class="avatar press" data-act="profile" aria-label="Perfil">${esc(name[0] || 'F').toUpperCase()}</button>
       </div></header>`;
@@ -222,7 +230,7 @@ function viewInicio() {
 function viewDespensa() {
   const all = sorted(), byPlace = p => all.filter(x => p === 'todo' || x.it.place === p).length;
   return `<header class="top" style="--i:0"><div>${title('Despensa')}<p class="sub">${plural(all.length, 'alimento registrado', 'alimentos registrados')}</p></div>
-      <button class="icon-btn glass press" data-act="add" aria-label="Agregar alimento">${I.plus}</button></header>
+      <div class="top-actions">${gear()}<button class="icon-btn glass press" data-act="add" aria-label="Agregar alimento">${I.plus}</button></div></header>
     <label class="search" style="--i:1"><span class="sr">Buscar</span>${I.search}<input class="input" id="q" type="search" placeholder="Buscar alimento" value="${esc(ui.q)}" autocomplete="off"></label>
     <div class="seg" style="--i:2" data-seg="place"><span class="knob"></span>${[['todo', 'Todo'], ...Object.entries(PLACES).map(([k, v]) => [k, v.label])].map(([k, l]) =>
       `<button class="${ui.place === k ? 'on' : ''}" data-act="place" data-p="${k}" aria-label="${l}: ${byPlace(k)}">${l}</button>`).join('')}</div>
@@ -243,7 +251,7 @@ function listHTML() {
 
 function viewRecetas() {
   const ms = matchRecipes(), hot = sorted().filter(x => x.state === 'porvencer');
-  return `<header class="top" style="--i:0"><div>${title('Recetas')}<p class="sub">Cocina primero lo que está por vencer</p></div></header>
+  return `<header class="top" style="--i:0"><div>${title('Recetas')}<p class="sub">Cocina primero lo que está por vencer</p></div>${gear()}</header>
     ${hot.length ? `<section style="--i:1"><p class="eyebrow">Úsalo primero</p><div class="hscroll">${hot.map((x, i) => hangTag(x, i)).join('')}</div></section>` : ''}
     <div class="recipes">${ms.map((m, i) => i === 0 && m.hot ? `<button class="reco press" data-act="recipe" data-id="${m.r.id}" style="--i:2">${ornament}<span class="reco-ico">${foodIcon(m.r.icon)}</span>
       <span class="eyebrow">Receta sugerida</span><b class="reco-t">${m.r.name}</b><span class="reco-m">Usa ${plural(m.hot, 'alimento', 'alimentos')} por vencer · <span class="num">${m.r.min}</span> min · ${m.r.serves} porciones</span>
@@ -275,7 +283,7 @@ function viewImpacto() {
   const lost = Object.entries(S.log.filter(l => l.action === 'desechado').reduce((m, l) => (m[l.cat] = (m[l.cat] || 0) + 1, m), {})).sort((a, b) => b[1] - a[1]).slice(0, 4);
   const lmax = Math.max(1, ...lost.map(l => l[1]));
   return `<header class="top" style="--i:0"><div>${title('Impacto')}<p class="sub">Tus últimos 30 días</p></div>
-      <button class="avatar press" data-act="profile" aria-label="Perfil">${esc(first()[0] || 'F').toUpperCase()}</button></header>
+      <div class="top-actions">${gear()}<button class="avatar press" data-act="profile" aria-label="Perfil">${esc(first()[0] || 'F').toUpperCase()}</button></div></header>
     <section class="big-card glass" style="--i:1"><div class="impact-top">
       ${donut([{ v: ok, c: 'var(--fresco)' }, { v: bad, c: 'var(--vencido)' }], Math.max(1, ok + bad), `<b class="num c-fresco">${roll(rate + '%', 'rate')}</b><small>aprovechado</small>`, 'green', 'var(--track)')}
       <div><h2>${recent.length ? (rate >= 75 ? '¡Vas muy bien!' : 'Vas mejorando') : 'Aún sin registros'}</h2>
@@ -302,7 +310,7 @@ function viewImpacto() {
 }
 
 const VIEWS = { inicio: viewInicio, despensa: viewDespensa, recetas: viewRecetas, impacto: viewImpacto };
-const TABS = [['inicio', 'home', 'Inicio'], ['despensa', 'box', 'Despensa'], null, ['recetas', 'chef', 'Recetas'], ['impacto', 'chart', 'Impacto']];
+const TABS = [['inicio', 'home', 'Inicio'], ['despensa', 'box', 'Despensa'], ['recetas', 'chef', 'Recetas'], ['impacto', 'chart', 'Impacto']];
 
 // ---------- onboarding ----------
 const SLIDES = [
@@ -337,11 +345,13 @@ function viewOnb() {
 // ---------- render ----------
 const TITLES = { inicio: 'Mi cocina', despensa: 'Despensa', recetas: 'Recetas', impacto: 'Impacto' };
 function applyTheme() {
-  const r = document.documentElement;
-  r.dataset.theme = S.prefs.theme; r.classList.toggle('big', !!S.prefs.bigText);
-  $('meta[name=theme-color]')?.setAttribute('content', S.prefs.theme === 'light' ? '#F9F6EF' : '#0B1A2F');
+  const r = document.documentElement, p = S.prefs, t = themeNow();
+  Object.assign(r.dataset, { theme: t, font: p.font, accent: p.accent, glass: p.glass, motion: motionOn() ? 'full' : 'reduced' });
+  r.classList.toggle('big', !!p.bigText);
+  $('meta[name=theme-color]')?.setAttribute('content', t === 'light' ? '#F9F6EF' : '#0B1A2F');
   const desk = $('.desk .logo'); if (desk) desk.src = logoSrc();
-  window.ReactNativeWebView?.postMessage(JSON.stringify({ type: 'theme', theme: S.prefs.theme }));
+  window.ReactNativeWebView?.postMessage(JSON.stringify({ type: 'theme', theme: t }));
+  lensAll();
 }
 function render(animate = false) {
   applyTheme();
@@ -349,10 +359,16 @@ function render(animate = false) {
   if (!S.user) { app.innerHTML = viewOnb(); return; }
   if (!$('#view')) {
     app.innerHTML = `<main id="view" class="view"></main><div class="minibar" aria-hidden="true"></div>
-      <nav class="tabbar glass" aria-label="Secciones"><span class="ind"></span>${TABS.map(t => t
-      ? `<button class="tab" data-act="tab" data-tab="${t[0]}"><span class="pill">${I[t[1]]}</span>${t[2]}</button>`
-      : `<button class="fab" data-act="scan" aria-label="Acerca tu celular a una pinza">${I.nfc}</button>`).join('')}</nav>`;
-    $('#view').addEventListener('scroll', e => app.classList.toggle('scrolled', e.target.scrollTop > 64), { passive: true });
+      <nav class="dock" aria-label="Secciones"><div class="tabbar glass"><span class="ind"></span>${TABS.map(t =>
+        `<button class="tab" data-act="tab" data-tab="${t[0]}"><span class="pill">${I[t[1]]}</span><span class="lbl">${t[2]}</span></button>`).join('')}</div>
+        <button class="fab" data-act="scan" aria-label="Acerca tu celular a una pinza">${I.nfc}</button></nav>`;
+    let lastY = 0;
+    $('#view').addEventListener('scroll', e => {
+      const y = e.target.scrollTop; app.classList.toggle('scrolled', y > 64);
+      if (Math.abs(y - lastY) > 8) { app.classList.toggle('mini', y > lastY && y > 140); lastY = y; } // iOS 26: dock shrinks while reading
+    }, { passive: true });
+    document.fonts?.ready.then(placeInd); // labels change width once the web fonts land
+    lensAll();
     animate = true;
   }
   const v = $('#view');
@@ -368,7 +384,7 @@ function render(animate = false) {
 function placeInd() {
   const ind = $('.tabbar .ind'), on = $(`.tab[data-tab="${ui.tab}"]`); if (!ind || !on) return;
   const x = on.offsetLeft + (on.offsetWidth - 64) / 2, from = Number(ind.dataset.x);
-  if (ind.dataset.x && from !== x) ind.animate([{ transform: `translateX(${from}px)` }, { transform: `translateX(${(from + x) / 2}px) scaleX(1.4)`, offset: .45 }, { transform: `translateX(${x}px)` }],
+  if (ind.dataset.x && from !== x && motionOn()) ind.animate([{ transform: `translateX(${from}px)` }, { transform: `translateX(${(from + x) / 2}px) scaleX(1.4)`, offset: .45 }, { transform: `translateX(${x}px)` }],
     { duration: 560, easing: 'cubic-bezier(.34,1.2,.64,1)' });
   ind.style.transform = `translateX(${x}px)`; ind.dataset.x = x;
 }
@@ -384,7 +400,11 @@ function placeKnob(seg) {
 window.addEventListener('resize', () => { placeInd(); document.querySelectorAll('[data-seg]').forEach(placeKnob); });
 function go(tab) {
   if (tab === ui.tab) { $('#view')?.scrollTo({ top: 0, behavior: 'smooth' }); return; }
-  ui.tab = tab; render(true); $('#view').scrollTop = 0; $('#app').classList.remove('scrolled');
+  const back = TABS.findIndex(t => t[0] === tab) < TABS.findIndex(t => t[0] === ui.tab);
+  const swap = () => { ui.tab = tab; render(true); $('#view').scrollTop = 0; $('#app').classList.remove('scrolled', 'mini'); };
+  if (!document.startViewTransition || !motionOn()) return swap();
+  const r = document.documentElement; r.classList.toggle('vt-back', back);
+  document.startViewTransition(swap).finished.finally(() => r.classList.remove('vt-back'));
 }
 const refresh = () => { save(); if ($('#view')) render(); };
 
@@ -395,14 +415,14 @@ function openSheet(html, ctx = {}) {
   const wasOpen = root.classList.contains('open');
   root.innerHTML = `<div class="scrim" data-act="close"></div><section class="sheet" role="dialog" aria-modal="true">
     <div class="grip" aria-hidden="true"></div><button class="close" data-act="close" aria-label="Cerrar">${I.x}</button><div class="sheet-body">${html}</div></section>`;
-  sheetCtx = ctx;
+  sheetCtx = ctx; $('#phone').classList.add('stack');
   if (wasOpen) root.classList.add('open'); else requestAnimationFrame(() => requestAnimationFrame(() => root.classList.add('open')));
   dragToClose(root);
 }
 function closeSheet() {
   const root = $('#sheet-root');
   if (!root.classList.contains('open')) return;
-  root.classList.remove('open'); root.style.removeProperty('--drag'); sheetCtx = null;
+  root.classList.remove('open'); root.style.removeProperty('--drag'); sheetCtx = null; $('#phone').classList.remove('stack');
   setTimeout(() => { if (!root.classList.contains('open')) root.innerHTML = ''; }, 450);
 }
 function dragToClose(root) {
@@ -510,9 +530,9 @@ function openAlerts() {
     ${can && !(S.prefs.notif && Notification.permission === 'granted') ? `<div class="actions"><button class="btn btn-primary block" data-act="notif-on">${I.bell} Activar avisos en este celular</button></div>` : ''}`);
 }
 
+const sw = (on, act, t, s) => `<button class="toggle" data-act="${act}" role="switch" aria-checked="${!!on}"><span><b>${t}</b><small>${s}</small></span><span class="switch ${on ? 'on' : ''}"></span></button>`;
 function openProfile() {
   const u = S.user;
-  const sw = (on, act, t, s) => `<button class="toggle" data-act="${act}" role="switch" aria-checked="${!!on}"><span><b>${t}</b><small>${s}</small></span><span class="switch ${on ? 'on' : ''}"></span></button>`;
   openSheet(`<div class="profile-head"><span class="avatar">${esc(first()[0] || 'F').toUpperCase()}</span>
       <div><h2 style="margin:0">${esc(u.name)}</h2><span class="hint">${esc(u.home || 'Mi hogar')} · ${plural(u.people, 'persona', 'personas')}</span></div></div>
     <h4>Mis pinzas</h4><div class="pinzas">${S.pinzas.map(p => { const it = itemOn(p.id); return `<div class="pinza glass">${pinzaImg(p)}
@@ -521,19 +541,85 @@ function openProfile() {
         : `<button class="icon-btn glass press" data-act="copy" data-id="${p.id}" aria-label="Copiar enlace de ${esc(p.name)}">${I.link}</button>`}</div>`; }).join('')}
       <button class="btn btn-ghost block" data-act="pair">${I.plus} Vincular otra pinza</button></div>
     <p class="hint" style="margin:10px 2px 0">${NFC ? 'Con el lápiz grabas el enlace de la pinza en una etiqueta NFC: así también funciona en iPhone.' : 'Con el enlace de cada pinza puedes programar una etiqueta NFC (por ejemplo con la app NFC Tools): al acercar el iPhone, se abre FRESHTAG en esa pinza.'}</p>
-    <h4>Preferencias</h4><div class="rows glass" style="padding:0 16px">
-      ${sw(S.prefs.theme === 'dark', 'theme-toggle', 'Modo oscuro', 'Fondo azul noche para usar de noche')}
-      ${sw(S.prefs.notif && 'Notification' in window && Notification.permission === 'granted', 'notif-toggle', 'Avisos', 'Una notificación al día con lo que está por vencer')}
-      ${sw(S.prefs.sound, 'sound-toggle', 'Sonidos', 'Un tono suave en avisos, lecturas de pinza y temporizadores')}
-      ${sw(S.prefs.vibe, 'vibe-toggle', 'Vibración', 'El teléfono vibra al acercar una pinza y con cada aviso')}
-      ${sw(S.prefs.bigText, 'big-toggle', 'Texto grande', 'Aumenta el tamaño de toda la app')}</div>
-    <div class="test-row"><button class="link" data-act="fb-test">${I.volume} Probar sonido y vibración</button>
-    ${S.prefs.notif ? `<button class="link" data-act="notif-test">${I.bell} Enviar un aviso de prueba</button>` : ''}</div>
+    <h4>App</h4><button class="btn btn-ghost block" data-act="settings">${I.gear} Ajustes: apariencia, tipografía, sonido</button>
     <h4>Datos</h4><div class="actions" style="margin-top:6px">
       <button class="btn btn-ghost" data-act="demo">Cargar cocina de ejemplo</button>
       <button class="btn btn-danger" data-act="reset">Borrar todo y empezar de cero</button></div>
     <div class="about"><img src="${logoSrc()}" alt="FRESHTAG">Prototipo funcional · Sistema inteligente de organización alimentaria<br>Equipo 6 · Prácticum II · Escuela de Diseño · 2026-60</div>`);
 }
+
+// ---------- Ajustes (personalization) ----------
+const FONTS = [['apple', 'Apple', 'SF Pro en iPhone · Geist en Android'], ['marca', 'FRESHTAG', 'Vice City Sans y DM Sans, del manual de marca'], ['futuro', 'Futurista', 'Space Grotesk y Geist']];
+const GLASS_NOTE = { liquid: 'Vidrio líquido con brillos en los bordes; en Android también refracta lo que pasa detrás.', frost: 'Vidrio esmerilado clásico, más difuso.', solid: 'Sin transparencias: más contraste y menos batería.' };
+function settingsHTML() {
+  const p = S.prefs, on = (k, v) => p[k] === v;
+  const seg = (k, opts) => `<div class="seg" data-seg="s-${k}"><span class="knob"></span>${opts.map(([v, l]) =>
+    `<button class="${on(k, v) ? 'on' : ''}" data-act="set" data-k="${k}" data-v="${v}" aria-pressed="${on(k, v)}">${l}</button>`).join('')}</div>`;
+  const notifOn = p.notif && 'Notification' in window && Notification.permission === 'granted';
+  const sysReduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  return `<h2>Ajustes</h2><p class="hint set-intro">Haz tuya la app. Los cambios se ven al momento y se guardan en este celular.</p>
+    <h4>Apariencia</h4>${seg('theme', [['light', 'Claro'], ['dark', 'Oscuro'], ['auto', 'Automático']])}
+    <h4>Color principal</h4><div class="swatches">${[['azul', 'Azul'], ['verde', 'Verde'], ['coral', 'Coral']].map(([v, l]) =>
+      `<button class="swatch sw-${v} ${on('accent', v) ? 'on' : ''}" data-act="set" data-k="accent" data-v="${v}" aria-pressed="${on('accent', v)}"><i></i>${l}</button>`).join('')}</div>
+    <h4>Tipografía</h4><div class="fonts">${FONTS.map(([v, l, d]) =>
+      `<button class="font-opt glass press ${on('font', v) ? 'on' : ''}" data-act="set" data-k="font" data-v="${v}" aria-pressed="${on('font', v)}"><span class="aa">Aa</span><span><b>${l}</b><small>${d}</small></span><span class="radio"></span></button>`).join('')}</div>
+    <h4>Vidrio</h4>${seg('glass', [['liquid', 'Líquido'], ['frost', 'Esmerilado'], ['solid', 'Sólido']])}
+    <p class="hint set-note">${GLASS_NOTE[p.glass] || ''}</p>
+    <h4>Movimiento y sonido</h4><div class="rows glass" style="padding:0 16px">
+      ${sw(motionOn(), 'motion-toggle', 'Animaciones', sysReduce ? 'Tu teléfono tiene «Reducir movimiento» activado' : 'Transiciones con resorte, aurora y efectos de vidrio')}
+      ${sw(p.sound, 'sound-toggle', 'Sonidos', 'Un tono suave en avisos, lecturas de pinza y temporizadores')}
+      ${sw(p.vibe, 'vibe-toggle', 'Vibración', 'El teléfono vibra al acercar una pinza y con cada aviso')}
+      ${sw(notifOn, 'notif-toggle', 'Avisos', 'Una notificación al día con lo que está por vencer')}
+      ${sw(p.bigText, 'big-toggle', 'Texto grande', 'Aumenta el tamaño de toda la app')}</div>
+    <div class="test-row"><button class="link" data-act="fb-test">${I.volume} Probar sonido y vibración</button>
+    ${notifOn ? `<button class="link" data-act="notif-test">${I.bell} Enviar un aviso de prueba</button>` : ''}</div>
+    <div class="set-reset"><button class="link" data-act="prefs-reset">Restablecer ajustes</button></div>`;
+}
+function openSettings() {
+  Object.keys(knobAt).filter(k => k.startsWith('s-')).forEach(k => delete knobAt[k]);
+  openSheet(settingsHTML(), { settings: true });
+  requestAnimationFrame(() => document.querySelectorAll('#sheet-root [data-seg]').forEach(placeKnob));
+}
+function redrawSettings() {
+  const body = $('#sheet-root .sheet-body'); if (!sheetCtx?.settings || !body) return;
+  const top = body.scrollTop; setBody(settingsHTML()); body.scrollTop = top;
+  body.querySelectorAll('[data-seg]').forEach(placeKnob);
+}
+// theme change: circular reveal from the finger (View Transitions); plain swap when unsupported or motion is off
+function reveal(e, fn) {
+  if (!document.startViewTransition || !motionOn()) return fn();
+  const r = document.documentElement;
+  r.style.setProperty('--tx', `${e?.clientX ?? innerWidth / 2}px`); r.style.setProperty('--ty', `${e?.clientY ?? innerHeight / 2}px`);
+  r.classList.add('theme-x'); const vt = document.startViewTransition(fn); vt.ready.catch(() => {}); vt.finished.finally(() => r.classList.remove('theme-x'));
+}
+
+// ---------- liquid glass refraction (Chromium only: Safari ignores SVG filters in backdrop-filter) ----------
+// Each glass shape gets a displacement map sized to it: neutral grey in the middle, red/green ramps in a band
+// along the edges, so the background bends near the rim like the edge of a lens.
+const REFRACT = !!navigator.userAgentData?.brands?.some(b => /Chromium/.test(b.brand));
+const lensSeen = new Set();
+function lensFilter(w, h, band) {
+  const id = `lg-${w}x${h}`; if (lensSeen.has(id)) return id;
+  let defs = $('#lg-defs');
+  if (!defs) {
+    defs = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); defs.id = 'lg-defs'; defs.setAttribute('aria-hidden', 'true');
+    defs.style.cssText = 'position:absolute;width:0;height:0'; document.body.appendChild(defs);
+  }
+  const bx = (band / w).toFixed(3), by = (band / h).toFixed(3);
+  const ramp = (c0, c1, b) => `<stop offset="0" stop-color="${c0}"/><stop offset="${b}" stop-color="${c1}"/><stop offset="${(1 - b).toFixed(3)}" stop-color="${c1}"/><stop offset="1" stop-color="#000"/>`;
+  const map = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><defs><linearGradient id="x">${ramp('#f00', '#800000', bx)}</linearGradient><linearGradient id="y" x2="0" y2="1">${ramp('#0f0', '#008000', by)}</linearGradient></defs><rect width="${w}" height="${h}" fill="url(#x)"/><rect width="${w}" height="${h}" fill="url(#y)" style="mix-blend-mode:screen"/></svg>`;
+  const f = document.createElementNS('http://www.w3.org/2000/svg', 'filter');
+  defs.appendChild(f);
+  f.outerHTML = `<filter xmlns="http://www.w3.org/2000/svg" id="${id}" x="0" y="0" width="${w}" height="${h}" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feImage href="data:image/svg+xml,${encodeURIComponent(map)}" x="0" y="0" width="${w}" height="${h}" preserveAspectRatio="none" result="map"/><feDisplacementMap in="SourceGraphic" in2="map" scale="${Math.round(band * 1.6)}" xChannelSelector="R" yChannelSelector="G"/></filter>`;
+  lensSeen.add(id); return id;
+}
+function lens(el) {
+  if (!(REFRACT && S.prefs.glass === 'liquid' && motionOn())) { el.style.removeProperty('backdrop-filter'); return; }
+  const w = Math.round(el.offsetWidth), h = Math.round(el.offsetHeight); if (!w || !h) return;
+  el.style.backdropFilter = `url(#${lensFilter(w, h, Math.round(Math.min(18, h / 3)))}) blur(1.5px) saturate(1.9) brightness(1.05)`;
+}
+const lensRO = typeof ResizeObserver === 'function' ? new ResizeObserver(es => es.forEach(e => lens(e.target))) : null;
+function lensAll() { document.querySelectorAll('.tabbar, .fab').forEach(el => { lens(el); lensRO?.observe(el); }); }
 
 // ---------- NFC ----------
 let scanCtrl = null;
@@ -744,22 +830,23 @@ const A = {
     burst(el); toast(`¡Buen provecho! Aprovechaste ${names.join(', ')}`, 'leaf'); closeSheet(); refresh();
   },
   'notif-on': async () => { if (await enableNotif()) openAlerts(); },
-  'notif-toggle': async (d, el) => { goo(el); if (S.prefs.notif) { S.prefs.notif = false; save(); } else await enableNotif(); setTimeout(openProfile, 380); },
+  'notif-toggle': async (d, el) => { goo(el); if (S.prefs.notif) { S.prefs.notif = false; save(); } else await enableNotif(); setTimeout(redrawSettings, 380); },
   'notif-test': () => notify(true),
   'sound-toggle': (d, el) => { goo(el); S.prefs.sound = !S.prefs.sound; save(); if (S.prefs.sound) feedback('success'); },
   'vibe-toggle': (d, el) => { goo(el); S.prefs.vibe = !S.prefs.vibe; save(); if (S.prefs.vibe) feedback('nfc'); },
   'fb-test': () => feedback('notif'),
   timer: (d, el) => startTimer(d.key, +d.min, el),
-  'big-toggle': (d, el) => { goo(el); setTimeout(() => { S.prefs.bigText = !S.prefs.bigText; save(); render(); openProfile(); }, 380); },
-  // animated theme toggle: circular reveal from the tap point
-  'theme-toggle': (d, el, e) => {
-    goo(el);
-    const r = document.documentElement, ph = $('#phone').getBoundingClientRect();
-    r.style.setProperty('--tx', `${(e?.clientX ?? ph.width / 2)}px`); r.style.setProperty('--ty', `${(e?.clientY ?? ph.height / 2)}px`);
-    const flip = () => { S.prefs.theme = S.prefs.theme === 'light' ? 'dark' : 'light'; save(); render(); openProfile(); };
-    if (!document.startViewTransition) return setTimeout(flip, 250);
-    setTimeout(() => { r.classList.add('theme-x'); const vt = document.startViewTransition(flip); vt.ready.catch(() => {}); vt.finished.finally(() => r.classList.remove('theme-x')); }, 220);
+  'big-toggle': (d, el) => { goo(el); setTimeout(() => { S.prefs.bigText = !S.prefs.bigText; save(); render(); redrawSettings(); }, 380); },
+  settings: openSettings,
+  // every look pref (theme, accent, font, glass) goes through here; the theme gets the circular reveal
+  set: (d, el, e) => {
+    if (S.prefs[d.k] === d.v) return;
+    const apply = () => { S.prefs[d.k] = d.v; save(); applyTheme(); redrawSettings(); if ($('#view')) render(); };
+    d.k === 'theme' ? reveal(e, apply) : apply();
+    if (d.k === 'font') document.fonts?.ready.then(() => { placeInd(); document.querySelectorAll('[data-seg]').forEach(placeKnob); });
   },
+  'motion-toggle': (d, el) => { goo(el); setTimeout(() => { S.prefs.motion = !motionOn(); save(); applyTheme(); redrawSettings(); }, 300); },
+  'prefs-reset': () => { Object.assign(S.prefs, LOOK); save(); applyTheme(); redrawSettings(); if ($('#view')) render(); toast('Ajustes restablecidos'); },
   write: d => { closeSheet(); writeTag(d.id); },
   copy: async d => { try { await navigator.clipboard.writeText(tagLink(d.id)); toast('Enlace copiado'); } catch { prompt('Enlace de la pinza', tagLink(d.id)); } },
   demo: () => { loadDemo(); closeSheet(); ui.tab = 'inicio'; render(true); toast('Cocina de ejemplo cargada'); },
@@ -869,6 +956,7 @@ function route() {
 window.addEventListener('hashchange', route);
 
 // ---------- boot ----------
+darkMQ.addEventListener?.('change', () => { if (S.prefs.theme === 'auto') applyTheme(); });
 render(true);
 setTimeout(() => $('#splash')?.classList.add('out'), 900);
 setTimeout(route, 1000);
