@@ -16,9 +16,10 @@
   <link rel="stylesheet" href="css/fonts.css">
   <link rel="stylesheet" href="css/app.css">
   <link rel="stylesheet" href="css/glass.css">
+  <link rel="stylesheet" href="css/native.css">
   <script>/* set the look before first paint so there is no flash */ try { var p = (JSON.parse(localStorage.getItem('freshtag:v1')) || {}).prefs || {}, d = document.documentElement.dataset;
     var t = p.theme === 'auto' ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : (p.v3 && p.theme) || 'light';
-    d.theme = t; d.font = p.font || 'apple'; d.accent = p.accent || 'azul'; d.glass = p.glass || 'liquid'; d.motion = p.motion === false ? 'reduced' : 'full'; } catch (e) {}</script>
+    d.design = p.design || 'nativo'; d.theme = t; d.font = p.font || 'apple'; d.accent = p.accent || 'azul'; d.glass = p.glass || 'liquid'; d.motion = p.motion === false ? 'reduced' : 'full'; } catch (e) {}</script>
 </head>
 <body>
   <aside class="desk">

@@ -1,0 +1,127 @@
+/* FRESHTAG app · v5.1 «Nativo» design — a full re-skin over the same markup, switched by <html data-design="nativo">.
+   Reference: Apple's grouped-content apps (Health, Settings, Reminders) under iOS 26.
+   Content sits on plain grouped cards; Liquid Glass is reserved for the floating layer (dock, sheets, toasts),
+   which is how Apple uses it. Brand colors stay as the accent and the freshness states. «FRESHTAG» = the original cream design. */
+
+:root[data-design="nativo"] {
+  --bg: #F2F2F7; --bg-2: #E5E5EA; --card: #FFFFFF; --fill: rgba(118, 118, 128, .12); --sep: rgba(60, 60, 67, .14);
+  --ink: #1C1C1E; --head: #000000; --muted: rgba(60, 60, 67, .62); --faint: rgba(60, 60, 67, .3);
+  --stroke: rgba(60, 60, 67, .1); --track: rgba(118, 118, 128, .14); --hi: transparent;
+  --eyebrow: rgba(60, 60, 67, .62); --accent: var(--azul); --primary: var(--azul);
+  --shadow: 0 1px 2px rgba(0, 0, 0, .04); --sheet: rgba(242, 242, 247, .94);
+  --porvencer-t: #8A5A10; --r: 22px; --r-lg: 26px;
+}
+:root[data-design="nativo"][data-theme="dark"] {
+  --bg: #000000; --bg-2: #1C1C1E; --card: #1C1C1E; --fill: rgba(118, 118, 128, .24); --sep: rgba(84, 84, 88, .55);
+  --ink: #FFFFFF; --head: #FFFFFF; --muted: rgba(235, 235, 245, .6); --faint: rgba(235, 235, 245, .3);
+  --stroke: rgba(84, 84, 88, .4); --track: rgba(118, 118, 128, .3); --eyebrow: rgba(235, 235, 245, .6);
+  --accent: color-mix(in srgb, var(--azul), #fff 35%); --primary: color-mix(in srgb, var(--azul), #fff 14%);
+  --shadow: none; --sheet: rgba(28, 28, 30, .92);
+  --fresco-t: #5BC79F; --porvencer-t: #F2B35A; --vencido-t: #FF7A66;
+}
+[data-design="nativo"] .aurora { display: none; }
+[data-design="nativo"] body { background: var(--bg); }
+
+/* cards: flat grouped surfaces (no rims, no gradients) */
+:root[data-design="nativo"] .glass:not(.fact):not(.tabbar) { background: var(--card); border: 0; box-shadow: var(--shadow); }
+[data-design="nativo"] .glass::after { display: none; }
+[data-design="nativo"] :is(.chip, .btn-ghost, .input, .stepper button, .cat, .check):not(.on) { background: var(--fill); box-shadow: none; border-color: transparent; }
+[data-design="nativo"] .check { background: var(--card); }
+
+/* large titles + section headers, Apple sizes */
+[data-design="nativo"] .title { font-size: 2.125rem; font-weight: 800; letter-spacing: -.025em; }
+[data-design="nativo"] .sec-head h3 { font-size: 1.375rem; font-weight: 700; letter-spacing: -.015em; }
+[data-design="nativo"] .eyebrow { font-size: .72rem; font-weight: 600; letter-spacing: .02em; text-transform: none; color: var(--eyebrow); }
+[data-design="nativo"] .hello { color: var(--muted); }
+[data-design="nativo"] .head-iso { display: none; }
+[data-design="nativo"] .avatar { box-shadow: none; }
+
+/* icon tiles: filled squircles with a white glyph, like Settings */
+[data-design="nativo"] .tile { border-radius: 12px; color: #fff; }
+[data-design="nativo"] .tile.sm { border-radius: 9px; } [data-design="nativo"] .tile.lg { border-radius: 15px; }
+[data-design="nativo"] .t-azul { background: #2A5082; } [data-design="nativo"] .t-verde { background: #2F7A62; }
+[data-design="nativo"] .t-coral { background: #D85B4A; } [data-design="nativo"] .t-crema { background: #B08A4A; }
+
+/* state labels: rounded pills instead of the hang-tag cut */
+[data-design="nativo"] .tagx { clip-path: none; border-radius: 999px; padding: 0 9px 0 8px; height: 22px; }
+[data-design="nativo"] .tagx i { background: var(--st); box-shadow: none; }
+
+/* "Vence pronto": plain cards (no punched hole) */
+[data-design="nativo"] .hang { -webkit-mask: none; mask: none; border-radius: 20px; padding-top: 14px; }
+[data-design="nativo"] .hang .hole { display: none; }
+
+/* the pinza tab stops hanging over the card: it becomes a small pill inside the row */
+[data-design="nativo"] .item .clip { position: static; order: 9; grid-column: 2 / -1; justify-self: start; margin-top: -4px; box-shadow: none; height: 20px; }
+[data-design="nativo"] .pzc-crema { box-shadow: inset 0 0 0 1px var(--stroke); }
+
+/* summary, notices, NFC row */
+[data-design="nativo"] .summary h2 { font-weight: 700; letter-spacing: -.02em; }
+[data-design="nativo"] .sem { border-left-color: var(--sep); }
+[data-design="nativo"] .nfc-box { border: 0; background: var(--card); box-shadow: var(--shadow); }
+[data-design="nativo"] .nfc-ico { background: var(--azul); color: #fff; }
+[data-design="nativo"] .nfc-ico::after { border-color: var(--azul); }
+[data-design="nativo"] .notice { background: var(--card); border: 0; box-shadow: var(--shadow); }
+
+/* recommended recipe: one solid accent card, no ornaments */
+[data-design="nativo"] .orn { display: none; }
+[data-design="nativo"] .reco { background: linear-gradient(160deg, color-mix(in srgb, var(--azul), #fff 10%), var(--azul)); box-shadow: 0 10px 24px -14px rgba(0, 0, 0, .45); }
+[data-design="nativo"] .reco-t { max-width: 82%; letter-spacing: -.02em; }
+[data-design="nativo"] .reco-ico { top: 18px; bottom: auto; right: 18px; background: rgba(255, 255, 255, .2); color: #fff; }
+[data-design="nativo"] .reco .tags { padding-right: 0; }
+[data-design="nativo"] .r-hero { background: linear-gradient(160deg, color-mix(in srgb, var(--azul), #fff 10%), var(--azul)); }
+[data-design="nativo"] .impact-mini { background: var(--card); color: var(--ink); box-shadow: var(--shadow); }
+[data-design="nativo"] .impact-mini b { color: var(--fresco-t); }
+[data-design="nativo"] .impact-mini > span { color: var(--muted); }
+[data-design="nativo"] .websearch { border: 0; }
+[data-design="nativo"] .tag { background: var(--fill); }
+[data-design="nativo"] .reco .tag { background: rgba(255, 255, 255, .18); }
+[data-design="nativo"] .r-tip { border: 0; background: var(--card); }
+
+/* controls: iOS segmented control, inputs, buttons, switches */
+[data-design="nativo"] .seg { padding: 2px; gap: 0; border-radius: 10px; background: var(--fill); }
+[data-design="nativo"] .seg button { height: 32px; border-radius: 8px; font-size: .82rem; color: var(--ink); }
+[data-design="nativo"] .seg .knob { top: 2px; bottom: 2px; border-radius: 8px; background: var(--card); box-shadow: 0 3px 8px rgba(0, 0, 0, .12), 0 0 0 .5px rgba(0, 0, 0, .04); }
+:root[data-design="nativo"][data-theme="dark"] .seg .knob { background: #636366; }
+[data-design="nativo"] .input { height: 46px; border-radius: 12px; border: 0; }
+[data-design="nativo"] .btn { min-height: 50px; border-radius: 14px; }
+[data-design="nativo"] .chip { height: 34px; border: 0; }
+[data-design="nativo"] .switch { width: 51px; height: 31px; }
+[data-design="nativo"] .switch::after { width: 27px; height: 27px; top: 2px; left: 2px; border-radius: 14px; }
+[data-design="nativo"] .switch.on::after { left: 22px; }
+[data-design="nativo"] .rows { border-radius: 14px; }
+[data-design="nativo"] .rows .r, [data-design="nativo"] .toggle, [data-design="nativo"] .history .h { border-bottom-color: var(--sep); }
+
+/* sheets: grouped gray, Liquid Glass close button stays */
+[data-design="nativo"] .sheet h2 { letter-spacing: -.02em; }
+[data-design="nativo"] .swatch, [data-design="nativo"] .font-opt { background: var(--card); }
+
+/* data cards in Impacto: grouped cards with colored figures */
+[data-design="nativo"] .fact, [data-design="nativo"] .fact:last-child { background: var(--card) !important; color: var(--ink); box-shadow: var(--shadow); }
+[data-design="nativo"] .fact b { color: var(--azul); }
+[data-design="nativo"] .fact:last-child b { color: var(--fresco-t); }
+[data-design="nativo"] .fact p { color: var(--muted); }
+[data-design="nativo"] .duo div { background: var(--fill); }
+
+/* dock: true Liquid Glass over the content */
+:root[data-design="nativo"] .tabbar.glass { background: color-mix(in srgb, var(--card) 62%, transparent); box-shadow: inset 1px 1px 0 rgba(255, 255, 255, .7), 0 0 0 .5px var(--stroke), 0 10px 30px -12px rgba(0, 0, 0, .25); }
+:root[data-design="nativo"][data-theme="dark"] .tabbar.glass { background: rgba(44, 44, 46, .7); box-shadow: inset 1px 1px 0 rgba(255, 255, 255, .14), 0 0 0 .5px rgba(255, 255, 255, .08); }
+[data-design="nativo"] .tab.on { color: var(--accent); }
+[data-design="nativo"] .minibar { color: var(--head); }
+
+/* «Diseño» picker in Ajustes: two live mini previews */
+.designs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.design-opt { display: grid; gap: 8px; padding: 10px 10px 12px; border-radius: 20px; text-align: left; color: var(--ink); background: var(--card, var(--glass-2)); box-shadow: inset 0 0 0 1.5px var(--stroke); transition: box-shadow .25s, transform .45s var(--ios-spring); }
+.design-opt.on { box-shadow: inset 0 0 0 2px var(--azul); }
+:root[data-theme="dark"] .design-opt.on { box-shadow: inset 0 0 0 2px var(--crema); }
+.design-opt b { font-size: .92rem; color: var(--head); }
+.design-opt small { display: block; font-size: .74rem; color: var(--muted); line-height: 1.3; }
+.mock { height: 92px; border-radius: 14px; padding: 9px; display: grid; gap: 6px; align-content: start; overflow: hidden; }
+.mock i { display: block; border-radius: 7px; }
+.mock-marca { background: #F9F6EF; }
+.mock-marca i:nth-child(1) { height: 30px; background: #2A5082; }
+.mock-marca i:nth-child(2) { height: 18px; background: #fff; box-shadow: inset 0 0 0 1px rgba(42, 80, 130, .12); }
+.mock-marca i:nth-child(3) { height: 18px; width: 60%; border: 1.5px dashed #3B8970; }
+.mock-nativo { background: #F2F2F7; }
+.mock-nativo i:nth-child(1) { height: 30px; background: #fff; }
+.mock-nativo i:nth-child(2) { height: 18px; background: #fff; }
+.mock-nativo i:nth-child(3) { height: 18px; width: 70%; margin: 0 auto; border-radius: 9px; background: rgba(255, 255, 255, .7); box-shadow: 0 0 0 .5px rgba(0, 0, 0, .1), 0 4px 10px -4px rgba(0, 0, 0, .25); }

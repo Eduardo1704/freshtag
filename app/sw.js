@@ -1,6 +1,6 @@
 // Offline shell: network first (so updates show up right away), cache as fallback.
-const CACHE = 'freshtag-v5';
-const SHELL = ['./', 'index.html', 'css/app.css', 'css/glass.css', 'css/fonts/geist.woff2', 'css/fonts/space-grotesk.woff2', 'css/fonts.css', 'js/app.js', 'js/data.js', 'js/icons.js', 'js/recipes.js', 'js/feedback.js', 'img/isotipo.svg', 'img/logo.svg', 'img/wordmark.svg', 'img/icon-192.png'];
+const CACHE = 'freshtag-v5-1';
+const SHELL = ['./', 'index.html', 'css/app.css', 'css/glass.css', 'css/native.css', 'css/fonts/geist.woff2', 'css/fonts/space-grotesk.woff2', 'css/fonts.css', 'js/app.js', 'js/data.js', 'js/icons.js', 'js/recipes.js', 'js/feedback.js', 'img/isotipo.svg', 'img/logo.svg', 'img/wordmark.svg', 'img/icon-192.png'];
 
 self.addEventListener('install', e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())));
 self.addEventListener('activate', e => e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())));

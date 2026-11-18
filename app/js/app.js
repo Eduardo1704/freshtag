@@ -56,13 +56,15 @@ const I = new Proxy({}, { get: (_, k) => `<svg class="i" viewBox="0 0 24 24" ari
 
 // ---------- state ----------
 // v5 look prefs (Ajustes): theme light|dark|auto, font apple|marca|futuro, accent azul|verde|coral, glass liquid|frost|solid
-const LOOK = { theme: 'light', font: 'apple', accent: 'azul', glass: 'liquid', motion: true, bigText: false };
+// design = nativo (iOS grouped look, default since v5.1) | marca (the original cream FRESHTAG design)
+const LOOK = { design: 'nativo', theme: 'light', font: 'apple', accent: 'azul', glass: 'liquid', motion: true, bigText: false };
 const fresh = () => ({ user: null, pinzas: KIT.map(p => ({ ...p })), items: [], log: [], prefs: { ...LOOK, notif: false, v3: true, v5: true, sound: true, vibe: true }, notified: '' });
 let S;
 try { S = JSON.parse(localStorage.getItem(KEY)) || fresh(); } catch { S = fresh(); }
 if (!S.prefs.v3) { S.prefs.theme = 'light'; S.prefs.v3 = true; } // v3: the brand manual asks for a cream background
 if (S.prefs.sound === undefined) { S.prefs.sound = true; S.prefs.vibe = true; } // v4 adds sound + vibration
 if (!S.prefs.v5) S.prefs = { ...LOOK, ...S.prefs, v5: true }; // v5 adds the Ajustes look prefs, keeping the user's theme and text size
+if (!S.prefs.design) S.prefs.design = LOOK.design;
 initFeedback(() => S.prefs);
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch { /* private mode: state stays in memory */ } };
 
@@ -346,7 +348,7 @@ function viewOnb() {
 const TITLES = { inicio: 'Mi cocina', despensa: 'Despensa', recetas: 'Recetas', impacto: 'Impacto' };
 function applyTheme() {
   const r = document.documentElement, p = S.prefs, t = themeNow();
-  Object.assign(r.dataset, { theme: t, font: p.font, accent: p.accent, glass: p.glass, motion: motionOn() ? 'full' : 'reduced' });
+  Object.assign(r.dataset, { design: p.design, theme: t, font: p.font, accent: p.accent, glass: p.glass, motion: motionOn() ? 'full' : 'reduced' });
   r.classList.toggle('big', !!p.bigText);
   $('meta[name=theme-color]')?.setAttribute('content', t === 'light' ? '#F9F6EF' : '#0B1A2F');
   const desk = $('.desk .logo'); if (desk) desk.src = logoSrc();
@@ -383,7 +385,7 @@ function render(animate = false) {
 // masked tab bar: the glass disc springs to the active tab and stretches on the way (gooey)
 function placeInd() {
   const ind = $('.tabbar .ind'), on = $(`.tab[data-tab="${ui.tab}"]`); if (!ind || !on) return;
-  const x = on.offsetLeft + (on.offsetWidth - 64) / 2, from = Number(ind.dataset.x);
+  const x = on.offsetLeft, from = Number(ind.dataset.x); ind.style.width = on.offsetWidth + 'px';
   if (ind.dataset.x && from !== x && motionOn()) ind.animate([{ transform: `translateX(${from}px)` }, { transform: `translateX(${(from + x) / 2}px) scaleX(1.4)`, offset: .45 }, { transform: `translateX(${x}px)` }],
     { duration: 560, easing: 'cubic-bezier(.34,1.2,.64,1)' });
   ind.style.transform = `translateX(${x}px)`; ind.dataset.x = x;
@@ -558,6 +560,8 @@ function settingsHTML() {
   const notifOn = p.notif && 'Notification' in window && Notification.permission === 'granted';
   const sysReduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   return `<h2>Ajustes</h2><p class="hint set-intro">Haz tuya la app. Los cambios se ven al momento y se guardan en este celular.</p>
+    <h4>Diseño</h4><div class="designs">${[['nativo', 'Nativo', 'Limpio, al estilo de las apps de Apple'], ['marca', 'FRESHTAG', 'Crema y etiquetas del manual de marca']].map(([v, l, d]) =>
+      `<button class="design-opt press ${on('design', v) ? 'on' : ''}" data-act="set" data-k="design" data-v="${v}" aria-pressed="${on('design', v)}"><span class="mock mock-${v}" aria-hidden="true"><i></i><i></i><i></i></span><span><b>${l}</b><small>${d}</small></span></button>`).join('')}</div>
     <h4>Apariencia</h4>${seg('theme', [['light', 'Claro'], ['dark', 'Oscuro'], ['auto', 'Automático']])}
     <h4>Color principal</h4><div class="swatches">${[['azul', 'Azul'], ['verde', 'Verde'], ['coral', 'Coral']].map(([v, l]) =>
       `<button class="swatch sw-${v} ${on('accent', v) ? 'on' : ''}" data-act="set" data-k="accent" data-v="${v}" aria-pressed="${on('accent', v)}"><i></i>${l}</button>`).join('')}</div>
@@ -618,7 +622,7 @@ function lens(el) {
   const w = Math.round(el.offsetWidth), h = Math.round(el.offsetHeight); if (!w || !h) return;
   el.style.backdropFilter = `url(#${lensFilter(w, h, Math.round(Math.min(18, h / 3)))}) blur(1.5px) saturate(1.9) brightness(1.05)`;
 }
-const lensRO = typeof ResizeObserver === 'function' ? new ResizeObserver(es => es.forEach(e => lens(e.target))) : null;
+let lensT; const lensRO = typeof ResizeObserver === 'function' ? new ResizeObserver(es => { clearTimeout(lensT); lensT = setTimeout(() => es.forEach(e => lens(e.target)), 180); }) : null;
 function lensAll() { document.querySelectorAll('.tabbar, .fab').forEach(el => { lens(el); lensRO?.observe(el); }); }
 
 // ---------- NFC ----------
@@ -842,7 +846,7 @@ const A = {
   set: (d, el, e) => {
     if (S.prefs[d.k] === d.v) return;
     const apply = () => { S.prefs[d.k] = d.v; save(); applyTheme(); redrawSettings(); if ($('#view')) render(); };
-    d.k === 'theme' ? reveal(e, apply) : apply();
+    d.k === 'theme' || d.k === 'design' ? reveal(e, apply) : apply();
     if (d.k === 'font') document.fonts?.ready.then(() => { placeInd(); document.querySelectorAll('[data-seg]').forEach(placeKnob); });
   },
   'motion-toggle': (d, el) => { goo(el); setTimeout(() => { S.prefs.motion = !motionOn(); save(); applyTheme(); redrawSettings(); }, 300); },
